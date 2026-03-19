@@ -1,4 +1,5 @@
 using BookingSystem.Api.Repositories;
+using BookingSystem.Api.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +11,11 @@ options.UseSqlite("Data Source=bookingsystem.db"));
 builder.Services.AddScoped<IBookingRepository, BookingRepository>();
 builder.Services.AddScoped<IResourceRepository, ResourceRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+//Services
+builder.Services.AddScoped<IBookingService, BookingService>();
+builder.Services.AddScoped<IResourceService, ResourceService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 //Controllers & Swagger
 builder.Services.AddControllers();
