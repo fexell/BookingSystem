@@ -35,7 +35,7 @@ namespace BookingSystem.Api.Services
                 booking.EndTime > b.StartTime);
 
             if (isOverlapping)
-                throw new InvalidOperationException("Resursen är redan bokad under denna tid.");
+                throw new InvalidOperationException("Resource is already booked during this time.");
 
             await _bookingRepository.AddAsync(booking);
             return booking;
