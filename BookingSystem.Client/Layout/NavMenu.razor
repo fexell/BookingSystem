@@ -8,43 +8,58 @@
 </div>
 
 <div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
-    <nav class="nav flex-column">
+    <nav class="flex-column">
+        
+       
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+                <span class="bi bi-house-door-nav-menu" aria-hidden="true"></span> Home
             </NavLink>
         </div>
-
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="login">
-                <span class="bi bi-person-lock-nav-menu" aria-hidden="true"></span> Logga in
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="register">
-                <span class="bi bi-person-plus-nav-menu" aria-hidden="true"></span> Registrera
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="mybookings">
-                <span class="bi bi-calendar-check-nav-menu" aria-hidden="true"></span> Mina Bokningar
-            </NavLink>
-        </div>
-
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="book">
                 <span class="bi bi-plus-square-nav-menu" aria-hidden="true"></span> Boka
             </NavLink>
         </div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="profile">
-                <span class="bi bi-person-vcard-nav-menu" aria-hidden="true"></span> Min Profil
-            </NavLink>
-        </div>
+        
+        <AuthorizeView>
+            
+            <NotAuthorized>
+                
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="login">
+                        <span class="bi bi-person-lock-nav-menu" aria-hidden="true"></span> Logga in
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="register">
+                        <span class="bi bi-person-plus-nav-menu" aria-hidden="true"></span> Registrera
+                    </NavLink>
+                </div>
+            </NotAuthorized>
+
+            <Authorized>
+                
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="mybookings">
+                        <span class="bi bi-calendar-check-nav-menu" aria-hidden="true"></span> Mina Bokningar
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="profile">
+                        <span class="bi bi-person-vcard-nav-menu" aria-hidden="true"></span> Min Profil
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    
+                    <NavLink class="nav-link" href="login">
+                        <span class="bi bi-box-arrow-right-nav-menu" aria-hidden="true"></span> Logga ut
+                    </NavLink>
+                </div>
+            </Authorized>
+
+        </AuthorizeView>
 
     </nav>
 </div>
