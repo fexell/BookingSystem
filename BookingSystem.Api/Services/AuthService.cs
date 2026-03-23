@@ -1,108 +1,79 @@
-﻿using BCrypt.Net;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-
 using BookingSystem.Api.Models;
 using BookingSystem.Api.Repositories;
 
-namespace BookingSystem.Api.Services
-{
-    public class AuthService : IAuthService
-    {
-        private readonly IUserRepository _userRepository;
+namespace BookingSystem.Api.Services {
+    public class AuthService : IAuthService {
+        private readonly UserManager<User> _userManager;
         private readonly IConfiguration _configuration;
         private readonly IRefreshTokenRepository _refreshTokenRepository;
 
         public AuthService(
-            IUserRepository userRepository,
+            UserManager<User> userManager,
             IConfiguration configuration,
-            IRefreshTokenRepository refreshTokenRepository)
-        {
-            _userRepository = userRepository;
+            IRefreshTokenRepository refreshTokenRepository ) {
+            _userManager = userManager;
             _configuration = configuration;
             _refreshTokenRepository = refreshTokenRepository;
         }
 
-        public async Task<User> RegisterAsync(string username, string email, string password)
-        {
+        public async Task<User> RegisterAsync( string username, string email, string password ) {
             var normalizedEmail = email.Trim().ToLower();
             var normalizedUsername = username.Trim().ToLower();
 
-            if ( !System.Text.RegularExpressions.Regex.IsMatch( normalizedEmail,
-                @"^[^@\s]+@[^@\s]+\.[^@\s]+$" ) )
-                throw new InvalidOperationException( "Invalid email format." );
-
-            if(!System.Text.RegularExpressions.Regex.IsMatch(normalizedUsername,
-                @"^[a-z0-9_]+$" ) )
-                throw new InvalidOperationException( "Username can only contain letters, numbers and underscores." );
-
-            var existingUser = await _userRepository.GetByEmailAsync( normalizedEmail );
-            if ( existingUser != null )
-                throw new InvalidOperationException( "This email is not available." );
-
-            var exisitingUsername = await _userRepository.GetByUsernameAsync( normalizedUsername );
-            if ( exisitingUsername != null )
-                throw new InvalidOperationException( "This username is not available." );
-
             var user = new User {
                 Name = normalizedUsername,
-                Email = normalizedEmail,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword( password ),
-                Role = "User"
+                UserName = normalizedEmail,
+                Email = normalizedEmail
             };
 
-            await _userRepository.AddAsync( user );
+            // Identity handles duplicate checks, password hashing, and validation
+            var result = await _userManager.CreateAsync( user, password );
+            if ( !result.Succeeded )
+                throw new InvalidOperationException( result.Errors.First().Description );
+
+            await _userManager.AddToRoleAsync( user, "User" );
             return user;
         }
 
-        public async Task<User?> LoginAsync(string email, string password)
-        {
+        public async Task<User?> LoginAsync( string email, string password ) {
             var normalizedEmail = email.Trim().ToLower();
+            var user = await _userManager.FindByEmailAsync( normalizedEmail );
+            if ( user == null ) return null;
 
-            // Hämta användaren
-            var user = await _userRepository.GetByEmailAsync(normalizedEmail);
-            if (user == null)
-                return null;
+            // Identity handles lockout and password verification
+            var result = await _userManager.CheckPasswordAsync( user, password );
+            if ( !result ) return null;
 
-            // Kolla lösenordet
-            bool isCorrectPassword = BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
-            if (!isCorrectPassword)
-                return null;
-
-            // Skapa JWT-token
             return user;
         }
 
-        public string GenerateToken(User user)
-        {
+        public string GenerateToken( User user ) {
             var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
-
-            var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
+                Encoding.UTF8.GetBytes( _configuration[ "Jwt:Key" ]! ) );
+            var credentials = new SigningCredentials( key, SecurityAlgorithms.HmacSha256 );
             var claims = new[]
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, user.Role)
+                new Claim(ClaimTypes.Email, user.Email!),
+                new Claim(ClaimTypes.Role, "User")
             };
-
             var token = new JwtSecurityToken(
-                issuer: _configuration["Jwt:Issuer"],
-                audience: _configuration["Jwt:Audience"],
+                issuer: _configuration[ "Jwt:Issuer" ],
+                audience: _configuration[ "Jwt:Audience" ],
                 claims: claims,
                 expires: DateTime.UtcNow.AddMinutes(
-                    int.Parse( _configuration[ "Jwt:AccessTokenLifetime" ]! )
-                ),
+                    int.Parse( _configuration[ "Jwt:AccessTokenLifetime" ]! ) ),
                 signingCredentials: credentials
             );
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            return new JwtSecurityTokenHandler().WriteToken( token );
         }
 
-        public async Task<string> GenerateRefreshTokenAsync(User user) {
+        public async Task<string> GenerateRefreshTokenAsync( User user ) {
             var randomBytes = new byte[ 64 ];
             using var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
             rng.GetBytes( randomBytes );
@@ -111,30 +82,23 @@ namespace BookingSystem.Api.Services
             await _refreshTokenRepository.AddAsync( new RefreshToken {
                 Token = token,
                 Expiry = DateTime.UtcNow.AddDays(
-                    int.Parse( _configuration[ "Jwt:RefreshTokenLifetime" ]! )
-                ),
+                    int.Parse( _configuration[ "Jwt:RefreshTokenLifetime" ]! ) ),
                 UserId = user.Id
             } );
 
             return token;
         }
 
-        public async Task<User?> RefreshAsync(string refreshToken) {
+        public async Task<User?> RefreshAsync( string refreshToken ) {
             var stored = await _refreshTokenRepository.GetByTokenAsync( refreshToken );
-
-            if ( stored == null )
-                return null;
-
-            if ( stored.IsRevoked )
-                return null;
-
-            if ( stored.Expiry < DateTime.UtcNow )
-                return null;
+            if ( stored == null ) return null;
+            if ( stored.IsRevoked ) return null;
+            if ( stored.Expiry < DateTime.UtcNow ) return null;
 
             stored.IsRevoked = true;
             await _refreshTokenRepository.UpdateAsync( stored );
 
-            return await _userRepository.GetByIdAsync( stored.UserId );
+            return await _userManager.FindByIdAsync( stored.UserId.ToString() );
         }
 
         public async Task RevokeRefreshTokensAsync( int userId ) {

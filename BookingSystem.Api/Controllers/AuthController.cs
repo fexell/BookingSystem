@@ -1,10 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Identity;
 
 using BookingSystem.Api.Services;
 using BookingSystem.Api.Filters;
 using BookingSystem.Api.Helpers;
-using System.Security.Claims;
+using BookingSystem.Api.Models;
 
 namespace BookingSystem.Api.Controllers
 {
@@ -13,10 +15,12 @@ namespace BookingSystem.Api.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
+        private readonly UserManager<User> _userManager;
 
-        public AuthController(IAuthService authService)
+        public AuthController(IAuthService authService, UserManager<User> userManager)
         {
             _authService = authService;
+            _userManager = userManager;
         }
 
         // Kolla om användaren inte är inloggad, då kan vi låta dom registrera sig

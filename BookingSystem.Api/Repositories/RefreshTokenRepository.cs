@@ -1,7 +1,7 @@
 ﻿
+using Microsoft.EntityFrameworkCore;
 
 using BookingSystem.Api.Models;
-using Microsoft.EntityFrameworkCore;
 
 namespace BookingSystem.Api.Repositories;
 
