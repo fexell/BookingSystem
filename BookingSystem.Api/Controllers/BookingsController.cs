@@ -1,7 +1,9 @@
-﻿using BookingSystem.Api.Models;
-using BookingSystem.Api.Services;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+
+using BookingSystem.Api.Models;
+using BookingSystem.Api.Services;
+using BookingSystem.Api.Filters;
 
 namespace BookingSystem.Api.Controllers
 {
@@ -33,6 +35,7 @@ namespace BookingSystem.Api.Controllers
             return Ok(booking);
         }
 
+        [ServiceFilter(typeof(SameUserFilter))]
         [HttpGet("user/{userId}")]
         public async Task<IActionResult> GetByUserId(int userId)
         {

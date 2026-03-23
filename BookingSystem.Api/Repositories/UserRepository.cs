@@ -50,5 +50,10 @@ namespace BookingSystem.Api.Repositories
             return await _context.Users
                 .FirstOrDefaultAsync(u => u.Email == email);
         }
+
+        public async Task<User?> GetByUsernameAsync(string username) {
+            return await _context.Users
+                .FirstOrDefaultAsync( u => u.Name == username );
+        }
     }
 }

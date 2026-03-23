@@ -1,6 +1,10 @@
-﻿
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+
 using BookingSystem.Api.Services;
-using Microsoft.AspNetCore.Mvc;
+using BookingSystem.Api.Filters;
+using BookingSystem.Api.Helpers;
+using System.Security.Claims;
 
 namespace BookingSystem.Api.Controllers
 {
@@ -15,27 +19,55 @@ namespace BookingSystem.Api.Controllers
             _authService = authService;
         }
 
+        // Kolla om användaren inte är inloggad, då kan vi låta dom registrera sig
+        [ServiceFilter(typeof(NotLoggedInFilter))]
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterRequest request)
         {
             try
             {
                 var user = await _authService.RegisterAsync(request.Username, request.Email, request.Password);
-                return Ok(new { message = "Registration failed!", userId = user.Id });
+
+                return CreatedAtAction( nameof( Register ), new { message = "Registration successful!", userId = user.Id } );
             }
             catch (InvalidOperationException ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(new { message = ex.Message });
             }
         }
 
+        // Kolla om användaren inte är inloggad, då kan vi låta dom logga in
+        [ServiceFilter( typeof( NotLoggedInFilter ) )]
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginRequest request)
         {
-            var token = await _authService.LoginAsync(request.Email, request.Password);
-            if (token == null)
-                return Unauthorized("Wrong email or password.");
-            return Ok(new { token });
+            var user = await _authService.LoginAsync( request.Email, request.Password );
+            if ( user == null )
+                return Unauthorized( new { message = "Wrong credentials!" } );
+
+            var accessToken = _authService.GenerateToken( user );
+            var refreshToken = await _authService.GenerateRefreshTokenAsync( user );
+
+            Response.Cookies.Append( "jwt", accessToken, CookieHelper.GetCookieOptions() );
+            Response.Cookies.Append( "refreshToken", refreshToken, CookieHelper.GetCookieOptions() );
+            Response.Cookies.Append( "userId", user.Id.ToString(), CookieHelper.GetCookieOptions( httpOnly: false ) );
+
+            return Ok( new { userId = user.Id, message = "Login successful!" } );
+        }
+
+        // Om användaren är verkligen inloggad så kan vi låta dom logga ut
+        [Authorize]
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            var userId = int.Parse( User.FindFirstValue( ClaimTypes.NameIdentifier )! );
+            await _authService.RevokeRefreshTokensAsync( userId );
+
+            Response.Cookies.Delete( "jwt" );
+            Response.Cookies.Delete( "refreshToken" );
+            Response.Cookies.Delete( "userId" );
+
+            return Ok(new { message = "Logged out successfully!" });
         }
     }
 
