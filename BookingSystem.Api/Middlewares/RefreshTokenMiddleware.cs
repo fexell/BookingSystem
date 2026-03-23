@@ -1,10 +1,13 @@
-﻿using System.Security.Claims;
+﻿using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
-using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
 using BookingSystem.Api.Services;
 using BookingSystem.Api.Helpers;
+using Microsoft.AspNetCore.Authentication;
 
 namespace BookingSystem.Api.Middlewares;
 
@@ -30,7 +33,13 @@ public class RefreshTokenMiddleware {
 
                 context.Response.Cookies.Append( "jwt", newAccessToken, CookieHelper.GetCookieOptions() );
                 context.Response.Cookies.Append( "refreshToken", newRefreshToken, CookieHelper.GetCookieOptions() );
+                
+                // Inject the new access token into the request
                 context.Request.Headers[ "Authorization" ] = $"Bearer {newAccessToken}";
+
+                var result = await context.AuthenticateAsync( JwtBearerDefaults.AuthenticationScheme );
+                if ( result.Succeeded )
+                    context.User = result.Principal;
             }
         }
 
