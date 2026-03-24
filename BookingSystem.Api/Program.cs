@@ -1,6 +1,5 @@
 ﻿using BookingSystem.Api.Filters;
 using BookingSystem.Api.Helpers;
-using BookingSystem.Api.Middlewares;
 using BookingSystem.Api.Models;
 using BookingSystem.Api.Repositories;
 using BookingSystem.Api.Services;
@@ -54,7 +53,7 @@ builder.Services.AddAuthentication( options => {
 
             // If access token missing or expired → try refresh
             if ( !string.IsNullOrEmpty( refresh ) &&
-                ( string.IsNullOrEmpty( jwt ) || RefreshTokenMiddleware.IsTokenExpired( jwt ) ) ) {
+                ( string.IsNullOrEmpty( jwt ) || TokenHelper.IsTokenExpired( jwt ) ) ) {
                 var authService = context.HttpContext.RequestServices.GetRequiredService<IAuthService>();
                 var user = await authService.RefreshAsync( refresh );
 
@@ -124,7 +123,6 @@ if ( app.Environment.IsDevelopment() ) {
 
 app.UseHttpsRedirection();
 app.UseCors( "BlazorClient" );
-//app.UseMiddleware<RefreshTokenMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
