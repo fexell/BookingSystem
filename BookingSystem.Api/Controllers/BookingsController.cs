@@ -1,9 +1,13 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 using BookingSystem.Api.Models;
 using BookingSystem.Api.Services;
 using BookingSystem.Api.Filters;
+using BookingSystem.Api.Helpers;
+
+using BookingSystem.Shared.DTOs;
 
 namespace BookingSystem.Api.Controllers
 {
@@ -23,7 +27,7 @@ namespace BookingSystem.Api.Controllers
         public async Task<IActionResult> GetAll()
         {
             var bookings = await _bookingService.GetAllBookingsAsync();
-            return Ok(bookings);
+            return Ok(bookings.Select(BookingMapperHelper.ToResponse));
         }
 
         [HttpGet("{id}")]
@@ -32,7 +36,8 @@ namespace BookingSystem.Api.Controllers
             var booking = await _bookingService.GetBookingByIdAsync(id);
             if (booking == null)
                 return NotFound();
-            return Ok(booking);
+
+            return Ok( BookingMapperHelper.ToResponse( booking ) );
         }
 
         [ServiceFilter(typeof(SameUserFilter))]
@@ -44,16 +49,24 @@ namespace BookingSystem.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(Booking booking)
+        public async Task<IActionResult> Create(CreateBookingRequest request)
         {
-            try
-            {
-                var created = await _bookingService.CreateBookingAsync(booking);
-                return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
+            var userId = int.Parse( User.FindFirstValue( ClaimTypes.NameIdentifier )! );
+            var booking = new Booking {
+                StartTime = request.StartTime,
+                EndTime = request.EndTime,
+                ResourceId = request.ResourceId,
+                PartySize = request.PartySize,
+                Notes = request.Notes,
+                UserId = userId
+            };
+
+            try {
+                var created = await _bookingService.CreateBookingAsync( booking );
+
+                return CreatedAtAction( nameof( GetById ), new { id = created.Id }, BookingMapperHelper.ToResponse( created ) );
+            } catch(InvalidOperationException ex) {
+                return BadRequest(new { message = ex.Message });
             }
         }
 

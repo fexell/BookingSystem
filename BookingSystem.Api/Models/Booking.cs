@@ -12,6 +12,9 @@
 
         public int ResourceId { get; set; }
         public Resource Resource { get; set; } = null!;
+        public string? Notes { get; set; }
+        public int PartySize { get; set; } = 1;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     }
 }

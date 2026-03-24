@@ -5,6 +5,7 @@ using System.Security.Claims;
 using System.Text;
 using BookingSystem.Api.Models;
 using BookingSystem.Api.Repositories;
+using BookingSystem.Api.Helpers;
 
 namespace BookingSystem.Api.Services {
     public class AuthService : IAuthService {
@@ -27,7 +28,7 @@ namespace BookingSystem.Api.Services {
 
             var user = new User {
                 Name = normalizedUsername,
-                UserName = normalizedEmail,
+                UserName = normalizedUsername,
                 Email = normalizedEmail
             };
 
@@ -52,27 +53,6 @@ namespace BookingSystem.Api.Services {
             return user;
         }
 
-        public string GenerateToken( User user ) {
-            var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes( _configuration[ "Jwt:Key" ]! ) );
-            var credentials = new SigningCredentials( key, SecurityAlgorithms.HmacSha256 );
-            var claims = new[]
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Email, user.Email!),
-                new Claim(ClaimTypes.Role, "User")
-            };
-            var token = new JwtSecurityToken(
-                issuer: _configuration[ "Jwt:Issuer" ],
-                audience: _configuration[ "Jwt:Audience" ],
-                claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(
-                    int.Parse( _configuration[ "Jwt:AccessTokenLifetime" ]! ) ),
-                signingCredentials: credentials
-            );
-            return new JwtSecurityTokenHandler().WriteToken( token );
-        }
-
         public async Task<string> GenerateRefreshTokenAsync( User user ) {
             var randomBytes = new byte[ 64 ];
             using var rng = System.Security.Cryptography.RandomNumberGenerator.Create();
@@ -89,20 +69,23 @@ namespace BookingSystem.Api.Services {
             return token;
         }
 
-        public async Task<User?> RefreshAsync( string refreshToken ) {
+        public string GenerateToken( User user ) => TokenHelper.GenerateToken( user, _configuration );
+
+        public async Task<User?> RefreshAsync ( string refreshToken ) {
             var stored = await _refreshTokenRepository.GetByTokenAsync( refreshToken );
-            if ( stored == null ) return null;
-            if ( stored.IsRevoked ) return null;
-            if ( stored.Expiry < DateTime.UtcNow ) return null;
+            if ( stored is null || stored.IsRevoked || stored.Expiry < DateTime.UtcNow )
+                return null;
 
-            stored.IsRevoked = true;
-            await _refreshTokenRepository.UpdateAsync( stored );
-
+            await _refreshTokenRepository.RevokeAsync( refreshToken );
             return await _userManager.FindByIdAsync( stored.UserId.ToString() );
         }
 
-        public async Task RevokeRefreshTokensAsync( int userId ) {
+        public async Task RevokeAllSessionsAsync( int userId ) {
             await _refreshTokenRepository.RevokeAllForUserAsync( userId );
+        }
+
+        public async Task RevokeRefreshTokenAsync( string refreshToken ) {
+            await _refreshTokenRepository.RevokeAsync( refreshToken );
         }
     }
 }

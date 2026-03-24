@@ -26,18 +26,24 @@ namespace BookingSystem.Api.Services
 
         public async Task<Booking> CreateBookingAsync(Booking booking)
         {
-            // Kollar om den nya bokningen överlappar med en befintlig bokning för samma resurs
-            var existingBookings = await _bookingRepository.GetByResourceIdAsync(booking.ResourceId);
+            if(booking.StartTime.Minute != 0 || booking.EndTime.Minute != 0)
+                throw new InvalidOperationException("Bookings must be whole hours.");
 
-            bool isOverlapping = existingBookings.Any(b =>
+            var duration = booking.EndTime - booking.StartTime;
+            if(duration.Minutes != 0 || duration.Seconds != 0 || duration.TotalHours < 1)
+                throw new InvalidOperationException( "Bookings must be in whole hour increments (minimum 1 hour)." );
+        
+            var exisitingBookings = await _bookingRepository.GetByResourceIdAsync(booking.ResourceId);
+            bool isOverlapping = exisitingBookings.Any( b =>
                 b.Status == "Active" &&
                 booking.StartTime < b.EndTime &&
-                booking.EndTime > b.StartTime);
+                booking.EndTime > b.StartTime );
 
-            if (isOverlapping)
-                throw new InvalidOperationException("Resource is already booked during this time.");
+            if(isOverlapping)
+                throw new InvalidOperationException( "Studio is already reserved at that time." );
 
             await _bookingRepository.AddAsync(booking);
+
             return booking;
         }
 

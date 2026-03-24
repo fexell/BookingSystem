@@ -1,0 +1,66 @@
+﻿@page "/register"
+@using System.ComponentModel.DataAnnotations
+
+<h3>Skapa konto</h3>
+
+<div class="row">
+    <div class="col-md-6">
+        <EditForm Model="registerModel" OnValidSubmit="HandleRegister">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="mb-3">
+                <label>Förnamn:</label>
+                <InputText @bind-Value="registerModel.FirstName" class="form-control" />
+                <ValidationMessage For="@(() => registerModel.FirstName)" class="text-danger" />
+            </div>
+
+            <div class="mb-3">
+                <label>Efternamn:</label>
+                <InputText @bind-Value="registerModel.LastName" class="form-control" />
+                <ValidationMessage For="@(() => registerModel.LastName)" class="text-danger" />
+            </div>
+
+            <div class="mb-3">
+                <label>E-post:</label>
+                <InputText @bind-Value="registerModel.Email" class="form-control" placeholder="namn@exempel.se" />
+                <ValidationMessage For="@(() => registerModel.Email)" class="text-danger" />
+            </div>
+
+            <div class="mb-3">
+                <label>Lösenord:</label>
+                <InputText @bind-Value="registerModel.Password" type="password" class="form-control" />
+                <ValidationMessage For="@(() => registerModel.Password)" class="text-danger" />
+            </div>
+
+            <button type="submit" class="btn btn-success">Registrera dig</button>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    private RegisterModel registerModel = new RegisterModel();
+
+    private async Task HandleRegister()
+    {
+        
+        Console.WriteLine($"Försöker registrera: {registerModel.FirstName} {registerModel.LastName}");
+    }
+
+    public class RegisterModel
+    {
+        [Required(ErrorMessage = "Du måste fylla i ett förnamn.")]
+        public string FirstName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Du måste fylla i ett efternamn.")]
+        public string LastName { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Du måste fylla i en e-postadress.")]
+        [EmailAddress(ErrorMessage = "Ogiltig e-postadress.")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Du måste fylla i ett lösenord.")]
+        [MinLength(6, ErrorMessage = "Lösenordet måste vara minst 6 tecken långt.")]
+        public string Password { get; set; } = string.Empty;
+    }
+}

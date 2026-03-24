@@ -1,0 +1,75 @@
+﻿@page "/book"
+@using System.ComponentModel.DataAnnotations
+
+<h3>Boka Resurs</h3>
+<hr />
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <EditForm Model="bookingModel" OnValidSubmit="HandleBooking">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <div class="mb-3">
+                        <label class="form-label">Välj resurs:</label>
+                        <InputSelect @bind-Value="bookingModel.ResourceId" class="form-select">
+                            <option value="">-- Välj i listan --</option>
+                            <option value="1">Grupprum A</option>
+                            <option value="2">Projektor 4K</option>
+                            <option value="3">Konferenssalen</option>
+                        </InputSelect>
+                        <ValidationMessage For="@(() => bookingModel.ResourceId)" class="text-danger" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Välj datum och tid:</label>
+                       
+                        <InputDate @bind-Value="bookingModel.Date" Type="InputDateType.DateTimeLocal" class="form-control" />
+                        <ValidationMessage For="@(() => bookingModel.Date)" class="text-danger" />
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Boka nu</button>
+                </EditForm>
+            </div>
+        </div>
+        
+        
+        @if (showSuccessMessage)
+        {
+            <div class="alert alert-success mt-3">
+                Din bokning är genomförd! (Låtsas vi i alla fall 😉)
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    
+    private BookingModel bookingModel = new BookingModel { Date = DateTime.Now.AddDays(1) };
+    private bool showSuccessMessage = false;
+
+    private async Task HandleBooking()
+    {
+        
+        Console.WriteLine($"Bokar resurs {bookingModel.ResourceId} till {bookingModel.Date}");
+        
+        
+        showSuccessMessage = true;
+        
+        
+        await Task.Delay(3000);
+        bookingModel = new BookingModel { Date = DateTime.Now.AddDays(1) };
+        showSuccessMessage = false;
+    }
+
+    public class BookingModel
+    {
+        [Required(ErrorMessage = "Du måste välja en resurs från listan.")]
+        public string ResourceId { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Du måste välja datum och tid.")]
+        public DateTime Date { get; set; }
+    }
+}

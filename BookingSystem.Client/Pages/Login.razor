@@ -1,0 +1,46 @@
+﻿@page "/login"
+@using System.ComponentModel.DataAnnotations
+
+<h3>Logga in</h3>
+
+<div class="row">
+    <div class="col-md-6">
+        <EditForm Model="loginModel" OnValidSubmit="HandleLogin">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="mb-3">
+                <label>E-post:</label>
+                <InputText @bind-Value="loginModel.Email" class="form-control" placeholder="namn@exempel.se" />
+                <ValidationMessage For="@(() => loginModel.Email)" class="text-danger" />
+            </div>
+
+            <div class="mb-3">
+                <label>Lösenord:</label>
+                <InputText @bind-Value="loginModel.Password" type="password" class="form-control" />
+                <ValidationMessage For="@(() => loginModel.Password)" class="text-danger" />
+            </div>
+
+            <button type="submit" class="btn btn-primary">Logga in</button>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    private LoginModel loginModel = new LoginModel();
+
+    private async Task HandleLogin()
+    {
+        Console.WriteLine($"Försöker logga in med: {loginModel.Email}");
+    }
+
+    public class LoginModel
+    {
+        [Required(ErrorMessage = "Du måste fylla i en e-postadress.")]
+        [EmailAddress(ErrorMessage = "Ogiltig e-postadress.")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Du måste fylla i ett lösenord.")]
+        public string Password { get; set; } = string.Empty;
+    }
+}
