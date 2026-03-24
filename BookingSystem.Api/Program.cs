@@ -1,13 +1,14 @@
-﻿using BookingSystem.Api.Filters;
-using BookingSystem.Api.Helpers;
-using BookingSystem.Api.Models;
-using BookingSystem.Api.Repositories;
-using BookingSystem.Api.Services;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+
+using BookingSystem.Api.Filters;
+using BookingSystem.Api.Helpers;
+using BookingSystem.Api.Models;
+using BookingSystem.Api.Repositories;
+using BookingSystem.Api.Services;
 
 var builder = WebApplication.CreateBuilder( args );
 
@@ -45,9 +46,10 @@ builder.Services.AddAuthentication( options => {
         IssuerSigningKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes( builder.Configuration[ "Jwt:Key" ]! ) )
     };
+
+    // If access token missing or expired, try refresh
     options.Events = new JwtBearerEvents {
-        OnMessageReceived = async context =>
-        {
+        OnMessageReceived = async context => {
             var jwt = context.Request.Cookies[ "jwt" ];
             var refresh = context.Request.Cookies[ "refreshToken" ];
 
@@ -72,6 +74,17 @@ builder.Services.AddAuthentication( options => {
 
             // Otherwise use the existing cookie
             context.Token = jwt;
+        },
+
+        OnChallenge = context => {
+            context.HandleResponse();
+            context.Response.StatusCode = 401;
+            context.Response.ContentType = "application/json";
+
+            // Return a 401 with a message, if the user is trying to access a protected route
+            return context.Response.WriteAsync(
+                """{ "message": "You must be logged in to access this resource" }"""
+            );
         }
     };
 } );

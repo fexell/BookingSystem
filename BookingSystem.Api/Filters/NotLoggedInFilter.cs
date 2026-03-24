@@ -9,7 +9,7 @@ namespace BookingSystem.Api.Filters;
 public class NotLoggedInFilter : IActionFilter {
     public void OnActionExecuting(ActionExecutingContext context) {
         if(context.HttpContext.User.Identity?.IsAuthenticated == true)
-            context.Result = new ConflictObjectResult( "User is already logged in" );
+            context.Result = new ConflictObjectResult( new { message = "You are already logged in" } );
     }
 
     public void OnActionExecuted(ActionExecutedContext context) { }

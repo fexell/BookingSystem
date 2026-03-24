@@ -16,8 +16,12 @@ namespace BookingSystem.Api.Controllers
     {
         private readonly IAuthService _authService;
         private readonly UserManager<User> _userManager;
+        private readonly IConfiguration _configuration;
 
-        public AuthController(IAuthService authService, UserManager<User> userManager)
+        public AuthController(
+            IAuthService authService,
+            UserManager<User> userManager,
+            IConfiguration configuration)
         {
             _authService = authService;
             _userManager = userManager;
@@ -61,17 +65,16 @@ namespace BookingSystem.Api.Controllers
 
         // Om användaren är verkligen inloggad så kan vi låta dom logga ut
         [Authorize]
-        [HttpPost("logout")]
-        public async Task<IActionResult> Logout()
-        {
-            var userId = int.Parse( User.FindFirstValue( ClaimTypes.NameIdentifier )! );
-            await _authService.RevokeRefreshTokensAsync( userId );
+        [HttpPost( "logout" )]
+        public async Task<IActionResult> Logout () {
+            var refreshToken = Request.Cookies[ "refreshToken" ];
+            if ( refreshToken != null )
+                await _authService.RevokeRefreshTokenAsync( refreshToken );
 
             Response.Cookies.Delete( "jwt" );
             Response.Cookies.Delete( "refreshToken" );
             Response.Cookies.Delete( "userId" );
-
-            return Ok(new { message = "Logged out successfully!" });
+            return Ok( new { message = "Logged out successfully!" } );
         }
     }
 
