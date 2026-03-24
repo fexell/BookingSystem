@@ -1,13 +1,14 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using BookingSystem.Api.Repositories;
-using BookingSystem.Api.Services;
-using BookingSystem.Api.Filters;
+﻿using BookingSystem.Api.Filters;
+using BookingSystem.Api.Helpers;
 using BookingSystem.Api.Middlewares;
 using BookingSystem.Api.Models;
+using BookingSystem.Api.Repositories;
+using BookingSystem.Api.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder( args );
 
@@ -15,7 +16,7 @@ var builder = WebApplication.CreateBuilder( args );
 builder.Services.AddDbContext<AppDbContext>( options =>
     options.UseSqlite( "Data Source=bookingsystem.db" ) );
 
-// Identity � use AddIdentityCore to avoid overriding JWT auth scheme
+// Identity — use AddIdentityCore to avoid overriding JWT auth scheme
 builder.Services.AddIdentityCore<User>( options => {
     options.Password.RequireDigit = true;
     options.Password.RequiredLength = 8;
@@ -29,7 +30,7 @@ builder.Services.AddIdentityCore<User>( options => {
 .AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
 
-// Authentication � JWT stays in control
+// Authentication — JWT stays in control
 builder.Services.AddAuthentication( options => {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -46,9 +47,32 @@ builder.Services.AddAuthentication( options => {
             Encoding.UTF8.GetBytes( builder.Configuration[ "Jwt:Key" ]! ) )
     };
     options.Events = new JwtBearerEvents {
-        OnMessageReceived = context => {
-            context.Token = context.Request.Cookies[ "jwt" ];
-            return Task.CompletedTask;
+        OnMessageReceived = async context =>
+        {
+            var jwt = context.Request.Cookies[ "jwt" ];
+            var refresh = context.Request.Cookies[ "refreshToken" ];
+
+            // If access token missing or expired → try refresh
+            if ( !string.IsNullOrEmpty( refresh ) &&
+                ( string.IsNullOrEmpty( jwt ) || RefreshTokenMiddleware.IsTokenExpired( jwt ) ) ) {
+                var authService = context.HttpContext.RequestServices.GetRequiredService<IAuthService>();
+                var user = await authService.RefreshAsync( refresh );
+
+                if ( user != null ) {
+                    var newAccess = authService.GenerateToken( user );
+                    var newRefresh = await authService.GenerateRefreshTokenAsync( user );
+
+                    context.Response.Cookies.Append( "jwt", newAccess, CookieHelper.GetCookieOptions() );
+                    context.Response.Cookies.Append( "refreshToken", newRefresh, CookieHelper.GetCookieOptions() );
+
+                    // Tell JWT handler to use the new token
+                    context.Token = newAccess;
+                    return;
+                }
+            }
+
+            // Otherwise use the existing cookie
+            context.Token = jwt;
         }
     };
 } );
@@ -99,8 +123,8 @@ if ( app.Environment.IsDevelopment() ) {
 }
 
 app.UseHttpsRedirection();
-app.UseCors( "BlazorClient" );                        // before auth
-app.UseMiddleware<RefreshTokenMiddleware>();         // before UseAuthentication
+app.UseCors( "BlazorClient" );
+//app.UseMiddleware<RefreshTokenMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

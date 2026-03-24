@@ -46,7 +46,7 @@ public class RefreshTokenMiddleware {
         await _next( context );
     }
 
-    private bool IsTokenExpired( string jwt ) {
+    public static bool IsTokenExpired( string jwt ) {
         try {
             var handler = new JwtSecurityTokenHandler();
             var token = handler.ReadJwtToken( jwt );
