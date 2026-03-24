@@ -1,5 +1,6 @@
 using System.Linq;
 using BookingSystem.Api.Models;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -13,13 +14,14 @@ namespace BookingSystem.Tests.IntegrationTests.Helpers
         {
             builder.ConfigureServices(services =>
             {
-                // Ta bort den befintliga Sqlite-databasen
-                var descriptor = services.SingleOrDefault(
-                    d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
+                // Ta bort den befintliga Sqlite-databasen och Option-typer
+                var descriptors = services
+                    .Where(d => d.ServiceType.Name.Contains("DbContextOptions"))
+                    .ToList();
 
-                if (descriptor != null)
+                foreach (var d in descriptors)
                 {
-                    services.Remove(descriptor);
+                    services.Remove(d);
                 }
 
                 // Lägg till In-Memory databas för testning

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using BookingSystem.Api.Models;
 using BookingSystem.Api.Services;
 using BookingSystem.Tests.IntegrationTests.Helpers;
+using BookingSystem.Shared.DTOs;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -63,10 +64,16 @@ namespace BookingSystem.Tests.IntegrationTests.Controllers
             var token = await GetJwtTokenAsync(testUser);
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            // Add a mock booking to the In-Memory DB
+            // Add a mock resource and booking to the In-Memory DB
             using (var scope = _factory.Services.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                
+                if (await db.Resources.FindAsync(1) == null)
+                {
+                    db.Resources.Add(new Resource { Id = 1, Name = "Test Room", Type = "Room" });
+                }
+
                 db.Bookings.Add(new Booking 
                 { 
                     Id = 1, 
@@ -84,9 +91,9 @@ namespace BookingSystem.Tests.IntegrationTests.Controllers
 
             // Assert
             response.StatusCode.Should().Be(HttpStatusCode.OK);
-            var returnedBookings = await response.Content.ReadFromJsonAsync<List<Booking>>();
+            var returnedBookings = await response.Content.ReadFromJsonAsync<List<BookingDto>>();
             returnedBookings.Should().NotBeNull();
-            returnedBookings.Count.Should().BeGreaterThanOrEqualTo(1);
+            returnedBookings!.Count.Should().BeGreaterThanOrEqualTo(1);
         }
 
         [Fact]
@@ -105,6 +112,12 @@ namespace BookingSystem.Tests.IntegrationTests.Controllers
             using (var scope = _factory.Services.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                
+                if (await db.Resources.FindAsync(2) == null)
+                {
+                    db.Resources.Add(new Resource { Id = 2, Name = "Overlapping Room", Type = "Room" });
+                }
+
                 // Existing booking
                 db.Bookings.Add(new Booking 
                 { 

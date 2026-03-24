@@ -18,8 +18,8 @@ namespace BookingSystem.Tests.UnitTests.Pages
 
             // Assert (Check that the UI rendered the correct validation error messages)
             var markup = cut.Markup;
-            markup.Should().Contain("Du m&#xE5;ste fylla i en e-postadress."); // HTML encoded "å"
-            markup.Should().Contain("Du m&#xE5;ste fylla i ett l&#xF6;senord."); // HTML encoded "å" and "ö"
+            markup.Should().Contain("Du måste fylla i en e-postadress."); 
+            markup.Should().Contain("Du måste fylla i ett lösenord."); 
         }
 
         [Fact]
@@ -39,7 +39,7 @@ namespace BookingSystem.Tests.UnitTests.Pages
 
             // Assert
             cut.Markup.Should().Contain("Ogiltig e-postadress.");
-            cut.Markup.Should().NotContain("Du m&#xE5;ste fylla i ett l&#xF6;senord.");
+            cut.Markup.Should().NotContain("Du måste fylla i ett lösenord.");
         }
     }
 }

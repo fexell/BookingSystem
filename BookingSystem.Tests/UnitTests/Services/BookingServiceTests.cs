@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using BookingSystem.Api.Models;
 using BookingSystem.Api.Repositories;
 using BookingSystem.Api.Services;
+using BookingSystem.Shared.DTOs;
 using FluentAssertions;
 using Moq;
 using Xunit;
@@ -46,6 +47,7 @@ namespace BookingSystem.Tests.UnitTests.Services
 
             // Assert
             result.Should().NotBeNull();
+            result.Should().BeOfType<BookingDto>();
             result.ResourceId.Should().Be(1);
             _mockBookingRepository.Verify(repo => repo.AddAsync(It.IsAny<Booking>()), Times.Once);
         }
@@ -117,6 +119,7 @@ namespace BookingSystem.Tests.UnitTests.Services
 
             // Assert
             result.Should().NotBeNull();
+            result.Should().BeOfType<BookingDto>();
             _mockBookingRepository.Verify(repo => repo.AddAsync(It.IsAny<Booking>()), Times.Once);
         }
 
@@ -173,6 +176,7 @@ namespace BookingSystem.Tests.UnitTests.Services
             // Assert
             result.Should().HaveCount(2);
             result.Should().Contain(b => b.Id == 1);
+            result.First().Should().BeOfType<BookingDto>();
         }
     }
 }

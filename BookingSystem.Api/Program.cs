@@ -72,8 +72,11 @@ builder.Services.AddAuthentication( options => {
                 }
             }
 
-            // Otherwise use the existing cookie
-            context.Token = jwt;
+            // Otherwise use the cookie if it exists (don't overwrite Bearer header if cookie is missing)
+            if (!string.IsNullOrEmpty(jwt))
+            {
+                context.Token = jwt;
+            }
         },
 
         OnChallenge = context => {
@@ -114,7 +117,8 @@ builder.Services.AddScoped<SameUserFilter>();
 builder.Services.AddScoped<NotLoggedInFilter>();
 
 // Controllers & Swagger
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddNewtonsoftJson();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 

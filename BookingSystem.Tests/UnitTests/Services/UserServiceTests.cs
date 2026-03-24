@@ -37,7 +37,7 @@ namespace BookingSystem.Tests.UnitTests.Services
 
             // Assert
             result.Should().NotBeNull();
-            result.Id.Should().Be(userId);
+            result!.Id.Should().Be(userId);
             result.UserName.Should().Be("john_doe");
         }
 
@@ -57,7 +57,7 @@ namespace BookingSystem.Tests.UnitTests.Services
 
             // Assert
             result.Should().NotBeNull();
-            result.Email.Should().Be(email);
+            result!.Email.Should().Be(email);
         }
     }
 }

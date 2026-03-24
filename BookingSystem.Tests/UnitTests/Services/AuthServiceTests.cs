@@ -109,7 +109,7 @@ namespace BookingSystem.Tests.UnitTests.Services
 
             // Assert
             result.Should().NotBeNull();
-            result.Email.Should().Be(email);
+            result!.Email.Should().Be(email);
         }
 
         [Fact]
