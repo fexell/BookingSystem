@@ -1,10 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Identity;
 
 using BookingSystem.Api.Services;
 using BookingSystem.Api.Filters;
 using BookingSystem.Api.Helpers;
-using System.Security.Claims;
+using BookingSystem.Api.Models;
 
 namespace BookingSystem.Api.Controllers
 {
@@ -13,10 +15,16 @@ namespace BookingSystem.Api.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
+        private readonly UserManager<User> _userManager;
+        private readonly IConfiguration _configuration;
 
-        public AuthController(IAuthService authService)
+        public AuthController(
+            IAuthService authService,
+            UserManager<User> userManager,
+            IConfiguration configuration)
         {
             _authService = authService;
+            _userManager = userManager;
         }
 
         // Kolla om användaren inte är inloggad, då kan vi låta dom registrera sig
@@ -57,17 +65,16 @@ namespace BookingSystem.Api.Controllers
 
         // Om användaren är verkligen inloggad så kan vi låta dom logga ut
         [Authorize]
-        [HttpPost("logout")]
-        public async Task<IActionResult> Logout()
-        {
-            var userId = int.Parse( User.FindFirstValue( ClaimTypes.NameIdentifier )! );
-            await _authService.RevokeRefreshTokensAsync( userId );
+        [HttpPost( "logout" )]
+        public async Task<IActionResult> Logout () {
+            var refreshToken = Request.Cookies[ "refreshToken" ];
+            if ( refreshToken != null )
+                await _authService.RevokeRefreshTokenAsync( refreshToken );
 
             Response.Cookies.Delete( "jwt" );
             Response.Cookies.Delete( "refreshToken" );
             Response.Cookies.Delete( "userId" );
-
-            return Ok(new { message = "Logged out successfully!" });
+            return Ok( new { message = "Logged out successfully!" } );
         }
     }
 
