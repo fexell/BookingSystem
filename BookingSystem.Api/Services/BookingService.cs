@@ -1,5 +1,6 @@
-﻿using BookingSystem.Api.Models;
+using BookingSystem.Api.Models;
 using BookingSystem.Api.Repositories;
+using BookingSystem.Shared.DTOs;
 
 namespace BookingSystem.Api.Services
 {
@@ -14,17 +15,29 @@ namespace BookingSystem.Api.Services
             _resourceRepository = resourceRepository;
         }
 
-        public async Task<IEnumerable<Booking>> GetAllBookingsAsync()
+        private static BookingDto Map(Booking b) => new BookingDto
         {
-            return await _bookingRepository.GetAllAsync();
+            Id = b.Id,
+            StartTime = b.StartTime,
+            EndTime = b.EndTime,
+            Status = b.Status,
+            UserId = b.UserId,
+            ResourceId = b.ResourceId
+        };
+
+        public async Task<IEnumerable<BookingDto>> GetAllBookingsAsync()
+        {
+            var bookings = await _bookingRepository.GetAllAsync();
+            return bookings.Select(Map);
         }
 
-        public async Task<Booking?> GetBookingByIdAsync(int id)
+        public async Task<BookingDto?> GetBookingByIdAsync(int id)
         {
-            return await _bookingRepository.GetByIdAsync(id);
+            var booking = await _bookingRepository.GetByIdAsync(id);
+            return booking != null ? Map(booking) : null;
         }
 
-        public async Task<Booking> CreateBookingAsync(Booking booking)
+        public async Task<BookingDto> CreateBookingAsync(Booking booking)
         {
             // Kollar om den nya bokningen överlappar med en befintlig bokning för samma resurs
             var existingBookings = await _bookingRepository.GetByResourceIdAsync(booking.ResourceId);
@@ -38,7 +51,7 @@ namespace BookingSystem.Api.Services
                 throw new InvalidOperationException("Resource is already booked during this time.");
 
             await _bookingRepository.AddAsync(booking);
-            return booking;
+            return Map(booking);
         }
 
         public async Task UpdateBookingAsync(Booking booking)
@@ -51,14 +64,16 @@ namespace BookingSystem.Api.Services
             await _bookingRepository.DeleteAsync(id);
         }
 
-        public async Task<IEnumerable<Booking>> GetBookingsByUserIdAsync(int userId)
+        public async Task<IEnumerable<BookingDto>> GetBookingsByUserIdAsync(int userId)
         {
-            return await _bookingRepository.GetByUserIdAsync(userId);
+            var bookings = await _bookingRepository.GetByUserIdAsync(userId);
+            return bookings.Select(Map);
         }
 
-        public async Task<IEnumerable<Booking>> GetBookingsByResourceIdAsync(int resourceId)
+        public async Task<IEnumerable<BookingDto>> GetBookingsByResourceIdAsync(int resourceId)
         {
-            return await _bookingRepository.GetByResourceIdAsync(resourceId);
+            var bookings = await _bookingRepository.GetByResourceIdAsync(resourceId);
+            return bookings.Select(Map);
         }
     }
 }
