@@ -17,6 +17,8 @@ public record BookingResponse (
     string Status,
     int UserId,
     string Username,
+    string FirstName,
+    string Surname,
     int ResourceId,
     string ResourceName,
     int PartySize,

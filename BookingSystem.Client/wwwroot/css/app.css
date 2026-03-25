@@ -10,6 +10,10 @@ a, .btn-link {
     color: #0071c1;
 }
 
+.sidebar {
+    z-index: 9000;
+}
+
 .btn-primary {
     color: #fff;
     background-color: #1b6ec2;
@@ -115,6 +119,12 @@ code {
 }
 
 /* ── Auth modal overlay ── */
+.auth-success {
+    color: #28a745;
+    margin-top: 0.5rem;
+    font-weight: 600;
+}
+
 .auth-modal-overlay {
     position: fixed;
     inset: 0;
