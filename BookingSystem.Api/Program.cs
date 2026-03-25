@@ -92,7 +92,7 @@ builder.Services.AddAuthentication( options => {
 // CORS
 builder.Services.AddCors( options => {
     options.AddPolicy( "BlazorClient", policy => {
-        policy.WithOrigins( "https://localhost:7024", "http://localhost:5001" )
+        policy.WithOrigins( "https://localhost:7193", "http://localhost:5173" )
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
