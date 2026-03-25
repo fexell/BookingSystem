@@ -24,13 +24,13 @@
                         } else if ( !resources.Any() ) {
                             <p class="text-muted">Inga tillgängliga resurser just nu.</p>
                         } else {
-                            <InputSelect @bind-Value="bookingModel.ResourceId" class="form-select">
+                        <InputSelect @bind-Value="bookingModel.ResourceId" class="form-select">
                                 <option value="0">-- Välj i listan --</option>
                                 @foreach ( var resource in resources ) {
                                     <option value="@resource.Id">@resource.Name</option>
                                 }
-                            </InputSelect>
-                            <ValidationMessage For="@(() => bookingModel.ResourceId)" class="text-danger" />
+                        </InputSelect>
+                        <ValidationMessage For="@(() => bookingModel.ResourceId)" class="text-danger" />
                         }
                     </div>
 
@@ -92,7 +92,7 @@
 </div>
 
 @code {
-
+    
     private BookingModel bookingModel = new BookingModel { Date = DateTime.Now.AddDays(1) };
     private bool showSuccessMessage = false;
     private int startHour = 8;
@@ -113,15 +113,15 @@
             partySize = bookingModel.PartySize,
             notes = bookingModel.Notes
         };
-
+        
         Console.WriteLine( $"Bokar resurs {payload.resourceId} " +
                           $"från {payload.startTime} till {payload.endTime}" );
-
+        
         // TODO: await BookingService.CreateAsync(payload);
-
+        
         showSuccessMessage = true;
         await Task.Delay( 3000 );
-
+        
         bookingModel = new BookingModel();
         startHour = 8;
         endHour = 9;

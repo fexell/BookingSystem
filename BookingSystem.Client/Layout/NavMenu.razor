@@ -18,53 +18,19 @@
 
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-nav-menu" aria-hidden="true"></span> Home
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
             </NavLink>
         </div>
-
-        <AuthorizeView>
-            <Authorized>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="book">
-                        <span class="bi bi-plus-square-nav-menu" aria-hidden="true"></span> Boka
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="mybookings">
-                        <span class="bi bi-calendar-check-nav-menu" aria-hidden="true"></span> Mina Bokningar
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="profile">
-                        <span class="bi bi-person-vcard-nav-menu" aria-hidden="true"></span> Min Profil
-                    </NavLink>
-                </div>
-            </Authorized>
-        </AuthorizeView>
-
-        <div class="flex-grow-1"></div>
-
-        <AuthorizeView>
-            <NotAuthorized>
-                <div class="nav-item px-3">
-                    <button class="nav-link btn btn-link w-100 text-start"
-                            @onclick:stopPropagation="true"
-                            @onclick="OpenLoginModal">
-                                Logga in
-                    </button>
-                </div>
-            </NotAuthorized>
-            <Authorized>
-                <div class="nav-item px-3">
-                    <button class="nav-link btn btn-link w-100 text-start"
-                            @onclick:stopPropagation="true"
-                            @onclick="OpenLogoutModal">
-                                 Logga ut
-                    </button>
-                </div>
-            </Authorized>
-        </AuthorizeView>
-
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="counter">
+                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
+            </NavLink>
+        </div>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="weather">
+                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
+            </NavLink>
+        </div>
     </nav>
 </div>
 
