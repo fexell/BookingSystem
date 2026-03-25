@@ -1,0 +1,143 @@
+﻿@page "/book"
+
+@using System.ComponentModel.DataAnnotations
+@using BookingSystem.Shared.DTOs
+@using BookingSystem.Client.Services
+
+@inject IResourceService ResourceService
+
+<h3>Boka Resurs</h3>
+<hr />
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <EditForm Model="bookingModel" OnValidSubmit="HandleBooking">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <div class="mb-3">
+                        <label class="form-label">Välj resurs:</label>
+                        @if ( resources == null ) {
+                            <p class="text-muted">Laddar resurser...</p>
+                        } else if ( !resources.Any() ) {
+                            <p class="text-muted">Inga tillgängliga resurser just nu.</p>
+                        } else {
+                        <InputSelect @bind-Value="bookingModel.ResourceId" class="form-select">
+                                <option value="0">-- Välj i listan --</option>
+                                @foreach ( var resource in resources ) {
+                                    <option value="@resource.Id">@resource.Name</option>
+                                }
+                        </InputSelect>
+                        <ValidationMessage For="@(() => bookingModel.ResourceId)" class="text-danger" />
+                        }
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Sällskapsstorlek:</label>
+                        <InputNumber @bind-Value="bookingModel.PartySize" class="form-control" min="1" />
+                        <ValidationMessage For="@(() => bookingModel.PartySize)" class="text-danger" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Anteckningar (valfritt):</label>
+                        <InputTextArea @bind-Value="bookingModel.Notes" class="form-control" rows="2" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Välj datum och tid:</label>
+                       
+                        <div class="mb-3">
+                            <label class="form-label">Välj datum:</label>
+                            <InputDate @bind-Value="bookingModel.Date" class="form-control" />
+                            <ValidationMessage For="@(() => bookingModel.Date)" class="text-danger" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Välj tid:</label>
+                            <div class="d-flex align-items-center gap-2">
+                                <InputSelect @bind-Value="startHour" class="form-select">
+                                    @for ( int h = 7; h <= 21; h++ ) {
+                                        <option value="@h">@h.ToString( "D2" ):00</option>
+                                    }
+                                </InputSelect>
+                                <span>–</span>
+                                <InputSelect @bind-Value="endHour" class="form-select">
+                                    @for ( int h = 8; h <= 22; h++ ) {
+                                        <option value="@h">@h.ToString( "D2" ):00</option>
+                                    }
+                                </InputSelect>
+                            </div>
+                            @if ( endHour <= startHour ) {
+                                <div class="text-danger mt-1" style="font-size:0.875rem;">
+                                    Sluttiden måste vara efter starttiden.
+                                </div>
+                            }
+                        </div>
+                        <ValidationMessage For="@(() => bookingModel.Date)" class="text-danger" />
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Boka nu</button>
+                </EditForm>
+            </div>
+        </div>
+        
+        
+        @if (showSuccessMessage)
+        {
+            <div class="alert alert-success mt-3">
+                Din bokning är genomförd! (Låtsas vi i alla fall 😉)
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    
+    private BookingModel bookingModel = new BookingModel { Date = DateTime.Now.AddDays(1) };
+    private bool showSuccessMessage = false;
+    private int startHour = 8;
+    private int endHour = 9;
+    private List<ResourceDto>? resources;
+
+    protected override async Task OnInitializedAsync() {
+        resources = await ResourceService.GetAvailableResourcesAsync();
+    }
+
+    private async Task HandleBooking() {
+        if ( endHour <= startHour ) return;
+
+        var payload = new {
+            resourceId = bookingModel.ResourceId,
+            startTime = bookingModel.Date.Date.AddHours( startHour ),
+            endTime = bookingModel.Date.Date.AddHours( endHour ),
+            partySize = bookingModel.PartySize,
+            notes = bookingModel.Notes
+        };
+        
+        Console.WriteLine( $"Bokar resurs {payload.resourceId} " +
+                          $"från {payload.startTime} till {payload.endTime}" );
+        
+        // TODO: await BookingService.CreateAsync(payload);
+        
+        showSuccessMessage = true;
+        await Task.Delay( 3000 );
+        
+        bookingModel = new BookingModel();
+        startHour = 8;
+        endHour = 9;
+        showSuccessMessage = false;
+    }
+
+    public class BookingModel {
+        [Required( ErrorMessage = "Du måste välja en resurs från listan." )]
+        public int ResourceId { get; set; }
+
+        [Required( ErrorMessage = "Du måste välja datum." )]
+        public DateTime Date { get; set; } = DateTime.Now.AddDays( 1 );
+
+        [Range( 1, 100, ErrorMessage = "Sällskapsstorlek måste vara minst 1." )]
+        public int PartySize { get; set; } = 1;
+
+        public string? Notes { get; set; }
+    }
+}

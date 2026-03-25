@@ -1,13 +1,15 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Mvc;
 using System.Text;
+
+using BookingSystem.Api.Filters;
+using BookingSystem.Api.Helpers;
+using BookingSystem.Api.Models;
 using BookingSystem.Api.Repositories;
 using BookingSystem.Api.Services;
-using BookingSystem.Api.Filters;
-using BookingSystem.Api.Middlewares;
-using BookingSystem.Api.Models;
 
 var builder = WebApplication.CreateBuilder( args );
 
@@ -15,7 +17,7 @@ var builder = WebApplication.CreateBuilder( args );
 builder.Services.AddDbContext<AppDbContext>( options =>
     options.UseSqlite( "Data Source=bookingsystem.db" ) );
 
-// Identity � use AddIdentityCore to avoid overriding JWT auth scheme
+// Identity — use AddIdentityCore to avoid overriding JWT auth scheme
 builder.Services.AddIdentityCore<User>( options => {
     options.Password.RequireDigit = true;
     options.Password.RequiredLength = 8;
@@ -29,7 +31,7 @@ builder.Services.AddIdentityCore<User>( options => {
 .AddEntityFrameworkStores<AppDbContext>()
 .AddDefaultTokenProviders();
 
-// Authentication � JWT stays in control
+// Authentication — JWT stays in control
 builder.Services.AddAuthentication( options => {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -45,10 +47,51 @@ builder.Services.AddAuthentication( options => {
         IssuerSigningKey = new SymmetricSecurityKey(
             Encoding.UTF8.GetBytes( builder.Configuration[ "Jwt:Key" ]! ) )
     };
+
+    // If access token missing or expired, try refresh
     options.Events = new JwtBearerEvents {
-        OnMessageReceived = context => {
-            context.Token = context.Request.Cookies[ "jwt" ];
-            return Task.CompletedTask;
+        OnMessageReceived = async context =>
+        {
+            var path = context.HttpContext.Request.Path.Value;
+
+            // 🚫 Do NOT refresh tokens on logout
+            if ( path != null && path.Contains( "/logout", StringComparison.OrdinalIgnoreCase ) ) {
+                context.Token = context.Request.Cookies[ "jwt" ];
+                return;
+            }
+
+            var jwt = context.Request.Cookies[ "jwt" ];
+            var refresh = context.Request.Cookies[ "refreshToken" ];
+
+            if ( !string.IsNullOrEmpty( refresh ) &&
+                ( string.IsNullOrEmpty( jwt ) || TokenHelper.IsTokenExpired( jwt ) ) ) {
+                var authService = context.HttpContext.RequestServices.GetRequiredService<IAuthService>();
+                var user = await authService.RefreshAsync( refresh );
+
+                if ( user != null ) {
+                    var newAccess = authService.GenerateToken( user );
+                    var newRefresh = await authService.GenerateRefreshTokenAsync( user );
+
+                    context.Response.Cookies.Append( "jwt", newAccess, CookieHelper.GetCookieOptions() );
+                    context.Response.Cookies.Append( "refreshToken", newRefresh, CookieHelper.GetCookieOptions() );
+
+                    context.Token = newAccess;
+                    return;
+                }
+            }
+
+            context.Token = jwt;
+        },
+
+        OnChallenge = context => {
+            context.HandleResponse();
+            context.Response.StatusCode = 401;
+            context.Response.ContentType = "application/json";
+
+            // Return a 401 with a message, if the user is trying to access a protected route
+            return context.Response.WriteAsync(
+                """{ "message": "You must be logged in to access this resource" }"""
+            );
         }
     };
 } );
@@ -56,29 +99,36 @@ builder.Services.AddAuthentication( options => {
 // CORS
 builder.Services.AddCors( options => {
     options.AddPolicy( "BlazorClient", policy => {
-        policy.WithOrigins( "https://localhost:7024", "http://localhost:5001" )
+        policy.WithOrigins( "https://localhost:7193", "http://localhost:5173" )
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
     } );
 } );
 
+builder.Services.Configure<ApiBehaviorOptions>( options => {
+    options.SuppressModelStateInvalidFilter = true;
+} );
+
 // Repositories
 builder.Services.AddScoped<IBookingRepository, BookingRepository>();
 builder.Services.AddScoped<IResourceRepository, ResourceRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 // Services
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IResourceService, ResourceService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 // Filters
 builder.Services.AddScoped<SameUserFilter>();
 builder.Services.AddScoped<NotLoggedInFilter>();
 
 // Controllers & Swagger
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddNewtonsoftJson();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -99,9 +149,10 @@ if ( app.Environment.IsDevelopment() ) {
 }
 
 app.UseHttpsRedirection();
-app.UseCors( "BlazorClient" );                        // before auth
-app.UseMiddleware<RefreshTokenMiddleware>();         // before UseAuthentication
+app.UseCors( "BlazorClient" );
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();
+
+public partial class Program { }

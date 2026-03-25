@@ -1,13 +1,15 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
+using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 
 using BookingSystem.Api.Services;
 using BookingSystem.Api.Filters;
 using BookingSystem.Api.Helpers;
 using BookingSystem.Api.Models;
 
+// Hello
 namespace BookingSystem.Api.Controllers
 {
     [ApiController]
@@ -16,27 +18,47 @@ namespace BookingSystem.Api.Controllers
     {
         private readonly IAuthService _authService;
         private readonly UserManager<User> _userManager;
+        private readonly IConfiguration _configuration;
 
-        public AuthController(IAuthService authService, UserManager<User> userManager)
+        public AuthController(
+            IAuthService authService,
+            UserManager<User> userManager,
+            IConfiguration configuration)
         {
             _authService = authService;
             _userManager = userManager;
+            _configuration = configuration;
         }
 
         // Kolla om användaren inte är inloggad, då kan vi låta dom registrera sig
-        [ServiceFilter(typeof(NotLoggedInFilter))]
-        [HttpPost("register")]
-        public async Task<IActionResult> Register(RegisterRequest request)
-        {
-            try
-            {
-                var user = await _authService.RegisterAsync(request.Username, request.Email, request.Password);
+        [ServiceFilter( typeof( NotLoggedInFilter ) )]
+        [HttpPost( "register" )]
+        public async Task<IActionResult> Register( RegisterRequest request ) {
+            // If model validation failed, return ONE error
+            if ( !ModelState.IsValid ) {
+                var firstError = ModelState.Values
+                    .SelectMany( v => v.Errors )
+                    .Select( e => e.ErrorMessage )
+                    .FirstOrDefault();
 
-                return CreatedAtAction( nameof( Register ), new { message = "Registration successful!", userId = user.Id } );
+                return BadRequest( new { message = firstError } );
             }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
+
+            try {
+                var user = await _authService.RegisterAsync(
+                    request.Username,
+                    request.FirstName,
+                    request.Surname,
+                    request.Email,
+                    request.Password
+                );
+
+                return CreatedAtAction( nameof( Register ), new {
+                    message = "Registration successful!",
+                    userId = user.Id
+                } );
+            } catch ( InvalidOperationException ex ) {
+                return BadRequest( new { message = ex.Message } );
             }
         }
 
@@ -61,20 +83,27 @@ namespace BookingSystem.Api.Controllers
 
         // Om användaren är verkligen inloggad så kan vi låta dom logga ut
         [Authorize]
-        [HttpPost("logout")]
-        public async Task<IActionResult> Logout()
-        {
-            var userId = int.Parse( User.FindFirstValue( ClaimTypes.NameIdentifier )! );
-            await _authService.RevokeRefreshTokensAsync( userId );
+        [HttpPost( "logout" )]
+        public async Task<IActionResult> Logout () {
+            var refreshToken = Request.Cookies[ "refreshToken" ];
+            if ( refreshToken != null )
+                await _authService.RevokeRefreshTokenAsync( refreshToken );
 
             Response.Cookies.Delete( "jwt" );
             Response.Cookies.Delete( "refreshToken" );
             Response.Cookies.Delete( "userId" );
-
-            return Ok(new { message = "Logged out successfully!" });
+            return Ok( new { message = "Logged out successfully!" } );
         }
     }
 
-    public record RegisterRequest(string Username, string Email, string Password);
-    public record LoginRequest(string Email, string Password);
+    public record RegisterRequest(
+        [Required] string Username,
+        [Required, MinLength( 2 )] string FirstName,
+        [Required, MinLength( 2 )] string Surname,
+        [Required, EmailAddress] string Email,
+        [Required] string Password);
+
+    public record LoginRequest(
+        [Required, EmailAddress] string Email,
+        [Required] string Password);
 }

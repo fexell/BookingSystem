@@ -1,4 +1,10 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@using BookingSystem.Shared.DTOs;
+@using BookingSystem.Client.Services;
+@inject NavigationManager Navigation
+@inject IAuthService AuthService
+@inject CustomAuthStateProvider AuthStateProvider
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">BookingSystem.Client</a>
         <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
@@ -8,32 +14,265 @@
 </div>
 
 <div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
-    <nav class="nav flex-column">
+    <nav class="flex-column h-100 d-flex">
+
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+                <span class="bi bi-house-door-nav-menu" aria-hidden="true"></span> Home
             </NavLink>
         </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
+
+        <AuthorizeView>
+            <Authorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="book">
+                        <span class="bi bi-plus-square-nav-menu" aria-hidden="true"></span> Boka
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="mybookings">
+                        <span class="bi bi-calendar-check-nav-menu" aria-hidden="true"></span> Mina Bokningar
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="profile">
+                        <span class="bi bi-person-vcard-nav-menu" aria-hidden="true"></span> Min Profil
+                    </NavLink>
+                </div>
+            </Authorized>
+        </AuthorizeView>
+
+        <div class="flex-grow-1"></div>
+
+        <AuthorizeView>
+            <NotAuthorized>
+                <div class="nav-item px-3">
+                    <button class="nav-link btn btn-link w-100 text-start"
+                            @onclick:stopPropagation="true"
+                            @onclick="OpenLoginModal">
+                                Logga in
+                    </button>
+                </div>
+            </NotAuthorized>
+            <Authorized>
+                <div class="nav-item px-3">
+                    <button class="nav-link btn btn-link w-100 text-start"
+                            @onclick:stopPropagation="true"
+                            @onclick="OpenLogoutModal">
+                                 Logga ut
+                    </button>
+                </div>
+            </Authorized>
+        </AuthorizeView>
+
     </nav>
 </div>
 
+@* Modal rendered OUTSIDE the nav div to avoid stacking context issues *@
+@if ( showLoginModal ) {
+    <div class="auth-modal-overlay" @onclick="CloseModals">
+        <div class="auth-modal" @onclick:stopPropagation="true">
+            <div class="auth-modal-header">
+                <h5>@(showRegister ? "Skapa konto" : "Logga in")</h5>
+                <button class="btn-close btn-close-white" @onclick="CloseModals"></button>
+            </div>
+            <div class="auth-modal-body">
+                @if ( showRegister ) {
+                    <div class="auth-field">
+                        <label for="reg-name">Förnamn</label>
+                        <input id="reg-name" type="text" placeholder="Anna"
+                               @bind="registerModel.FirstName" />
+                    </div>
+                    <div class="auth-field">
+                        <label for="reg-surname">Efternamn</label>
+                        <input id="reg-surname" type="text" placeholder="Svensson"
+                               @bind="registerModel.Surname" />
+                    </div>
+                    <div class="auth-field">
+                        <label for="reg-username">Användarnamn</label>
+                        <input id="reg-username" type="text" placeholder="anna123"
+                               @bind="registerModel.UserName" />
+                    </div>
+                    <div class="auth-field">
+                        <label for="reg-email">E-post</label>
+                        <input id="reg-email" type="email" placeholder="anna@exempel.se"
+                               @bind="registerModel.Email" />
+                    </div>
+                    <div class="auth-field">
+                        <label for="reg-password">Lösenord</label>
+                        <input id="reg-password" type="password" placeholder="••••••••"
+                               @bind="registerModel.Password" />
+                    </div>
+                    <div class="auth-field">
+                        <label for="reg-confirm">Bekräfta lösenord</label>
+                        <input id="reg-confirm" type="password" placeholder="••••••••"
+                               @bind="registerModel.ConfirmPassword" />
+                    </div>
+                    @if ( !string.IsNullOrEmpty( authError ) ) {
+                        <p class="auth-error">@authError</p>
+                    }
+
+                    @if ( !string.IsNullOrEmpty( authSuccess ) ) {
+                        <p class="auth-success">@authSuccess</p>
+                    }
+                    <button class="auth-submit-btn" @onclick="Register">Skapa konto</button>
+                    <p class="auth-switch-text">
+                        Har du redan ett konto?
+                        <button class="btn btn-link p-0" @onclick="ToggleRegister">Logga in här.</button>
+                    </p>
+                } else {
+                    <div class="auth-field">
+                        <label for="login-email">E-post</label>
+                        <input id="login-email" type="email" placeholder="anna@exempel.se"
+                               @bind="loginModel.Email" />
+                    </div>
+                    <div class="auth-field">
+                        <label for="login-password">Lösenord</label>
+                        <input id="login-password" type="password" placeholder="••••••••"
+                               @bind="loginModel.Password" />
+                    </div>
+                    @if ( !string.IsNullOrEmpty( authError ) ) {
+                        <p class="auth-error">@authError</p>
+                    }
+                    <button class="auth-submit-btn" @onclick="Login">Logga in</button>
+                    <p class="auth-switch-text">
+                        Inget konto?
+                        <button class="btn btn-link p-0" @onclick="ToggleRegister">Registrera dig här.</button>
+                    </p>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@if ( showLogoutModal ) {
+    <div class="auth-modal-overlay" @onclick="CloseModals">
+        <div class="auth-modal" @onclick:stopPropagation="true">
+            <div class="auth-modal-header">
+                <h5>Logga ut</h5>
+                <button class="btn-close btn-close-white" @onclick="CloseModals"></button>
+            </div>
+            <div class="auth-modal-body">
+                <p>Är du säker på att du vill logga ut?</p>
+                <div class="d-flex gap-2 justify-content-end">
+                    <button class="btn btn-secondary" @onclick="CloseModals">Avbryt</button>
+                    <button class="btn btn-primary" @onclick="Logout">Logga ut</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
+    // --- existing fields ---
     private bool collapseNavMenu = true;
+    private bool showLoginModal = false;
+    private bool showLogoutModal = false;
+    private bool showRegister = false;
+    private string? authSuccess;
+    private string? authError;
 
+    // --- models ---
+    private LoginModel loginModel = new();
+    private RegisterModel registerModel = new();
+
+    private class LoginModel {
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+
+    private class RegisterModel {
+        public string FirstName { get; set; } = string.Empty;
+        public string Surname { get; set; } = string.Empty;
+        public string UserName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public string ConfirmPassword { get; set; } = string.Empty;
+    }
+
+    // --- nav ---
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+    private void ToggleNavMenu() => collapseNavMenu = !collapseNavMenu;
 
-    private void ToggleNavMenu()
-    {
-        collapseNavMenu = !collapseNavMenu;
+    private void OpenLoginModal() {
+        showLoginModal = true;
+        showRegister = false;
+        authError = null;
+        authSuccess = null;
+        collapseNavMenu = true;
+    }
+
+    private void OpenLogoutModal() {
+        showLogoutModal = true;
+        collapseNavMenu = true;
+    }
+
+    private void CloseModals() {
+        showLoginModal = false;
+        showLogoutModal = false;
+        authError = null;
+        authSuccess = null;
+    }
+
+    private void ToggleRegister() {
+        showRegister = !showRegister;
+        authError = null;
+        authSuccess = null;
+    }
+
+    // --- auth handlers ---
+    private async Task Login() {
+        authError = null;
+
+        var success = await AuthService.LoginAsync( loginModel.Email, loginModel.Password );
+
+        if ( success ) {
+            AuthStateProvider.NotifyAuthStateChanged();
+            CloseModals();
+        } else {
+            authError = "Fel e-post eller lösenord.";
+        }
+    }
+
+    private async Task Register() {
+        authError = null;
+
+        if ( registerModel.Password != registerModel.ConfirmPassword ) {
+            authError = "Lösenorden matchar inte.";
+            return;
+        }
+
+        var request = new RegisterRequest {
+            Username = registerModel.UserName,
+            FirstName = registerModel.FirstName,
+            Surname = registerModel.Surname,
+            Email = registerModel.Email,
+            Password = registerModel.Password
+        };
+
+        var result = await AuthService.RegisterAsync( request );
+
+        if ( result.Success ) {
+            authSuccess = "Konto skapades! Du loggas in automatiskt...";
+            authError = null;
+
+            await AuthService.LoginAsync( registerModel.Email, registerModel.Password );
+            AuthStateProvider.NotifyAuthStateChanged();
+
+            // Optional: small delay so user sees the success message
+            await Task.Delay( 800 );
+
+            CloseModals();
+        } else {
+            authSuccess = null;
+            authError = result.Error;
+        }
+    }
+
+    private async Task Logout() {
+        await AuthService.LogoutAsync();
+        AuthStateProvider.NotifyAuthStateChanged();
+        CloseModals();
+        Navigation.NavigateTo( "/", forceLoad: true );
     }
 }

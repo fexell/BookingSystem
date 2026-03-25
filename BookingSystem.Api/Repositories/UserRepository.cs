@@ -53,7 +53,7 @@ namespace BookingSystem.Api.Repositories
 
         public async Task<User?> GetByUsernameAsync(string username) {
             return await _context.Users
-                .FirstOrDefaultAsync( u => u.Name == username );
+                .FirstOrDefaultAsync( u => u.UserName == username );
         }
     }
 }

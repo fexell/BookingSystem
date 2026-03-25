@@ -1,0 +1,68 @@
+﻿@page "/mybookings"
+
+<h3>Mina Bokningar</h3>
+<hr />
+
+@if (bookings == null)
+{
+    <p><em>Laddar dina bokningar...</em></p>
+}
+else if (bookings.Count == 0)
+{
+    <div class="alert alert-info">Du har inga aktiva bokningar just nu.</div>
+}
+else
+{
+    <div class="row">
+       
+        @foreach (var booking in bookings)
+        {
+            <div class="col-md-4 mb-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">@booking.ResourceName</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">@booking.Date.ToString("yyyy-MM-dd kl. HH:mm")</h6>
+                        
+                        <p class="card-text mt-3">
+                            Status:
+                            @if (booking.IsConfirmed)
+                            {
+                                <span class="badge bg-success">Bekräftad</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark">Väntar på godkännande</span>
+                            }
+                        </p>
+                    </div>
+                    <div class="card-footer bg-transparent border-top-0">
+                        <button class="btn btn-outline-danger btn-sm w-100">Avboka</button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    
+    private List<BookingMock> bookings = new();
+
+   
+    protected override void OnInitialized()
+    {
+     
+        bookings.Add(new BookingMock { Id = 1, ResourceName = "Grupprum A", Date = DateTime.Now.AddDays(2), IsConfirmed = true });
+        bookings.Add(new BookingMock { Id = 2, ResourceName = "Projektor 4K", Date = DateTime.Now.AddDays(5), IsConfirmed = false });
+        bookings.Add(new BookingMock { Id = 3, ResourceName = "Konferenssalen", Date = DateTime.Now.AddDays(10), IsConfirmed = true });
+    }
+
+    
+    public class BookingMock
+    {
+        public int Id { get; set; }
+        public string ResourceName { get; set; } = string.Empty;
+        public DateTime Date { get; set; }
+        public bool IsConfirmed { get; set; }
+    }
+}

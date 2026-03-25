@@ -22,16 +22,18 @@ public class RefreshTokenRepository : IRefreshTokenRepository {
         await _context.SaveChangesAsync();
     }
 
-    public async Task RevokeAllForUserAsync(int userId) {
-        var tokens = await _context.RefreshTokens
-            .Where( rt => rt.UserId == userId && !rt.IsRevoked )
-            .ToListAsync();
-
-        foreach(var token in tokens) {
-            token.IsRevoked = true;
-        }
-
+    public async Task RevokeAsync ( string refreshToken ) {
+        var token = await _context.RefreshTokens
+            .FirstOrDefaultAsync( rt => rt.Token == refreshToken );
+        if ( token is null ) return;
+        token.IsRevoked = true;
         await _context.SaveChangesAsync();
+    }
+
+    public async Task RevokeAllForUserAsync( int userId ) {
+        await _context.RefreshTokens
+            .Where( rt => rt.UserId == userId && !rt.IsRevoked )
+            .ExecuteUpdateAsync( s => s.SetProperty( rt => rt.IsRevoked, true ) );
     }
 
     public async Task UpdateAsync(RefreshToken refreshToken) {
