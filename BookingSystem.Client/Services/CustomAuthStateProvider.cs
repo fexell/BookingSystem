@@ -22,7 +22,7 @@ public class CustomAuthStateProvider : AuthenticationStateProvider {
         var claims = new[] { new Claim( ClaimTypes.NameIdentifier, userId ) };
         var identity = new ClaimsIdentity( claims, "cookie" );
         return new AuthenticationState( new ClaimsPrincipal( identity ) );
-    }
+        }
 
     public void NotifyAuthStateChanged() {
         NotifyAuthenticationStateChanged( GetAuthenticationStateAsync() );

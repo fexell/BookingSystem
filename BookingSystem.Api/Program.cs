@@ -127,7 +127,8 @@ builder.Services.AddScoped<SameUserFilter>();
 builder.Services.AddScoped<NotLoggedInFilter>();
 
 // Controllers & Swagger
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddNewtonsoftJson();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -153,3 +154,5 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();
+
+public partial class Program { }

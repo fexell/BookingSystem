@@ -1,5 +1,6 @@
-﻿using BookingSystem.Api.Models;
+using BookingSystem.Api.Models;
 using BookingSystem.Api.Repositories;
+using BookingSystem.Shared.DTOs;
 
 namespace BookingSystem.Api.Services {
     public class BookingService : IBookingService {

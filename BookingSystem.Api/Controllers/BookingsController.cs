@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -24,14 +24,14 @@ namespace BookingSystem.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<ActionResult<IEnumerable<BookingDto>>> GetAll()
         {
             var bookings = await _bookingService.GetAllBookingsAsync();
             return Ok(bookings.Select(BookingMapperHelper.ToResponse));
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
+        public async Task<ActionResult<BookingDto>> GetById(int id)
         {
             var booking = await _bookingService.GetBookingByIdAsync(id);
             if (booking == null)
@@ -42,7 +42,7 @@ namespace BookingSystem.Api.Controllers
 
         [ServiceFilter(typeof(SameUserFilter))]
         [HttpGet("user/{userId}")]
-        public async Task<IActionResult> GetByUserId(int userId)
+        public async Task<ActionResult<IEnumerable<BookingDto>>> GetByUserId(int userId)
         {
             var bookings = await _bookingService.GetBookingsByUserIdAsync(userId);
             return Ok(bookings);
@@ -75,6 +75,7 @@ namespace BookingSystem.Api.Controllers
         {
             if (id != booking.Id)
                 return BadRequest("ID does not match.");
+
             await _bookingService.UpdateBookingAsync(booking);
             return NoContent();
         }
