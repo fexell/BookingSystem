@@ -9,49 +9,43 @@ using BookingSystem.Api.Helpers;
 
 using BookingSystem.Shared.DTOs;
 
-namespace BookingSystem.Api.Controllers
-{
+namespace BookingSystem.Api.Controllers {
     [Authorize]
     [ApiController]
-    [Route("api/[controller]")]
-    public class BookingsController : ControllerBase
-    {
+    [Route( "api/[controller]" )]
+    public class BookingsController : ControllerBase {
         private readonly IBookingService _bookingService;
 
-        public BookingsController(IBookingService bookingService)
-        {
+        public BookingsController( IBookingService bookingService ) {
             _bookingService = bookingService;
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<BookingDto>>> GetAll()
-        {
+        public async Task<ActionResult<IEnumerable<BookingDto>>> GetAll() {
             var bookings = await _bookingService.GetAllBookingsAsync();
-            return Ok(bookings.Select(BookingMapperHelper.ToResponse));
+            return Ok( bookings );
         }
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<BookingDto>> GetById(int id)
-        {
-            var booking = await _bookingService.GetBookingByIdAsync(id);
-            if (booking == null)
+        [HttpGet( "{id}" )]
+        public async Task<ActionResult<BookingDto>> GetById( int id ) {
+            var booking = await _bookingService.GetBookingByIdAsync( id );
+            if ( booking == null )
                 return NotFound();
 
-            return Ok( BookingMapperHelper.ToResponse( booking ) );
+            return Ok( booking );
         }
 
-        [ServiceFilter(typeof(SameUserFilter))]
-        [HttpGet("user/{userId}")]
-        public async Task<ActionResult<IEnumerable<BookingDto>>> GetByUserId(int userId)
-        {
-            var bookings = await _bookingService.GetBookingsByUserIdAsync(userId);
-            return Ok(bookings);
+        [ServiceFilter( typeof( SameUserFilter ) )]
+        [HttpGet( "user/{userId}" )]
+        public async Task<ActionResult<IEnumerable<BookingDto>>> GetByUserId( int userId ) {
+            var bookings = await _bookingService.GetBookingsByUserIdAsync( userId );
+            return Ok( bookings );
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(CreateBookingRequest request)
-        {
+        public async Task<IActionResult> Create( CreateBookingRequest request ) {
             var userId = int.Parse( User.FindFirstValue( ClaimTypes.NameIdentifier )! );
+
             var booking = new Booking {
                 StartTime = request.StartTime,
                 EndTime = request.EndTime,
@@ -63,27 +57,24 @@ namespace BookingSystem.Api.Controllers
 
             try {
                 var created = await _bookingService.CreateBookingAsync( booking );
-
-                return CreatedAtAction( nameof( GetById ), new { id = created.Id }, BookingMapperHelper.ToResponse( created ) );
-            } catch(InvalidOperationException ex) {
-                return BadRequest(new { message = ex.Message });
+                return CreatedAtAction( nameof( GetById ), new { id = created.Id }, created );
+            } catch ( InvalidOperationException ex ) {
+                return BadRequest( new { message = ex.Message } );
             }
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, Booking booking)
-        {
-            if (id != booking.Id)
-                return BadRequest("ID does not match.");
+        [HttpPut( "{id}" )]
+        public async Task<IActionResult> Update( int id, Booking booking ) {
+            if ( id != booking.Id )
+                return BadRequest( "ID does not match." );
 
-            await _bookingService.UpdateBookingAsync(booking);
+            await _bookingService.UpdateBookingAsync( booking );
             return NoContent();
         }
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
-        {
-            await _bookingService.DeleteBookingAsync(id);
+        [HttpDelete( "{id}" )]
+        public async Task<IActionResult> Delete( int id ) {
+            await _bookingService.DeleteBookingAsync( id );
             return NoContent();
         }
     }

@@ -12,17 +12,27 @@ namespace BookingSystem.Api.Services {
             _resourceRepository = resourceRepository;
         }
 
-        // Return fully-loaded bookings (User + Resource)
-        public async Task<IEnumerable<Booking>> GetAllBookingsAsync() {
-            return await _bookingRepository.GetAllWithIncludesAsync();
+        // Helper mapper
+        private static BookingDto ToDto( Booking b ) => new BookingDto {
+            Id = b.Id,
+            StartTime = b.StartTime,
+            EndTime = b.EndTime,
+            Status = b.Status,
+            UserId = b.UserId,
+            ResourceId = b.ResourceId
+        };
+
+        public async Task<IEnumerable<BookingDto>> GetAllBookingsAsync() {
+            var bookings = await _bookingRepository.GetAllWithIncludesAsync();
+            return bookings.Select( ToDto );
         }
 
-        // Return fully-loaded booking (User + Resource)
-        public async Task<Booking?> GetBookingByIdAsync( int id ) {
-            return await _bookingRepository.GetByIdWithIncludesAsync( id );
+        public async Task<BookingDto?> GetBookingByIdAsync( int id ) {
+            var booking = await _bookingRepository.GetByIdWithIncludesAsync( id );
+            return booking is null ? null : ToDto( booking );
         }
 
-        public async Task<Booking> CreateBookingAsync( Booking booking ) {
+        public async Task<BookingDto> CreateBookingAsync( Booking booking ) {
             // --- Validation rules ---
             if ( booking.StartTime.Minute != 0 || booking.EndTime.Minute != 0 )
                 throw new InvalidOperationException( "Bookings must be whole hours." );
@@ -31,7 +41,7 @@ namespace BookingSystem.Api.Services {
             if ( duration.Minutes != 0 || duration.Seconds != 0 || duration.TotalHours < 1 )
                 throw new InvalidOperationException( "Bookings must be in whole hour increments (minimum 1 hour)." );
 
-            // Use lightweight query (no includes) for overlap validation
+            // Overlap validation
             var existingBookings = await _bookingRepository.GetByResourceIdAsync( booking.ResourceId );
 
             bool isOverlapping = existingBookings.Any( b =>
@@ -45,9 +55,9 @@ namespace BookingSystem.Api.Services {
             // Save booking
             await _bookingRepository.AddAsync( booking );
 
-            // Return fully-loaded version for API response
-            return await _bookingRepository.GetByIdWithIncludesAsync( booking.Id )
-                   ?? booking;
+            // Return fully-loaded version
+            var saved = await _bookingRepository.GetByIdWithIncludesAsync( booking.Id ) ?? booking;
+            return ToDto( saved );
         }
 
         public async Task UpdateBookingAsync( Booking booking ) {
@@ -58,14 +68,14 @@ namespace BookingSystem.Api.Services {
             await _bookingRepository.DeleteAsync( id );
         }
 
-        // Fully-loaded bookings for user
-        public async Task<IEnumerable<Booking>> GetBookingsByUserIdAsync( int userId ) {
-            return await _bookingRepository.GetByUserIdWithIncludesAsync( userId );
+        public async Task<IEnumerable<BookingDto>> GetBookingsByUserIdAsync( int userId ) {
+            var bookings = await _bookingRepository.GetByUserIdWithIncludesAsync( userId );
+            return bookings.Select( ToDto );
         }
 
-        // Fully-loaded bookings for resource
-        public async Task<IEnumerable<Booking>> GetBookingsByResourceIdAsync( int resourceId ) {
-            return await _bookingRepository.GetByResourceIdWithIncludesAsync( resourceId );
+        public async Task<IEnumerable<BookingDto>> GetBookingsByResourceIdAsync( int resourceId ) {
+            var bookings = await _bookingRepository.GetByResourceIdWithIncludesAsync( resourceId );
+            return bookings.Select( ToDto );
         }
     }
 }
