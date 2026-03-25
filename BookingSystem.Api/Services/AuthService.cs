@@ -22,12 +22,15 @@ namespace BookingSystem.Api.Services {
             _refreshTokenRepository = refreshTokenRepository;
         }
 
-        public async Task<User> RegisterAsync( string username, string email, string password ) {
+        public async Task<User> RegisterAsync( string username, string firstName, string surname, string email, string password ) {
             var normalizedEmail = email.Trim().ToLower();
             var normalizedUsername = username.Trim().ToLower();
+            var normalizedFirstName = char.ToUpper( firstName[ 0 ] ) + firstName.Substring( 1 ).ToLower();
+            var normalizedSurname = char.ToUpper( surname[ 0 ] ) + surname.Substring( 1 ).ToLower();
 
             var user = new User {
-                Name = normalizedUsername,
+                FirstName = normalizedFirstName,
+                Surname = normalizedSurname,
                 UserName = normalizedUsername,
                 Email = normalizedEmail
             };
