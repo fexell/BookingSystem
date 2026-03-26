@@ -253,16 +253,14 @@
         var result = await AuthService.RegisterAsync( request );
 
         if ( result.Success ) {
-            authSuccess = "Konto skapades! Du loggas in automatiskt...";
+            authSuccess = "Konto skapades! Logga in för att fortsätta.";
             authError = null;
 
-            await AuthService.LoginAsync( registerModel.Email, registerModel.Password );
-            AuthStateProvider.NotifyAuthStateChanged();
+            // ❌ REMOVE auto-login
+            // await AuthService.LoginAsync(registerModel.Email, registerModel.Password);
+            // AuthStateProvider.NotifyAuthStateChanged();
 
-            // Optional: small delay so user sees the success message
-            await Task.Delay( 800 );
-
-            CloseModals();
+            // CloseModals();
         } else {
             authSuccess = null;
             authError = result.Error;
