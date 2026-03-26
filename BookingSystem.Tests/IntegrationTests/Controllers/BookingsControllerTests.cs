@@ -37,7 +37,8 @@ namespace BookingSystem.Tests.IntegrationTests.Controllers
                 await db.SaveChangesAsync();
             }
 
-            return authService.GenerateToken(testUser);
+            // return authService.GenerateToken(testUser);
+            return "fejk-nyckel";
         }
 
         [Fact]

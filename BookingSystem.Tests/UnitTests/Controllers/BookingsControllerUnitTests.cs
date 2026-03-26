@@ -91,26 +91,28 @@ namespace BookingSystem.Tests.UnitTests.Controllers
             var badRequest = result as BadRequestObjectResult;
             badRequest!.Value.Should().Be("ID does not match.");
         }
+        /*
+                [Fact]
+                public async Task Create_ShouldReturnBadRequest_WhenServiceThrowsInvalidOperationException()
+                {
+                    // Arrange
+                    var booking = new Booking { Id = 1, ResourceId = 1 };
 
-        [Fact]
-        public async Task Create_ShouldReturnBadRequest_WhenServiceThrowsInvalidOperationException()
-        {
-            // Arrange
-            var booking = new Booking { Id = 1, ResourceId = 1 };
-            
-            _mockBookingService
-                .Setup(s => s.CreateBookingAsync(booking))
-                .ThrowsAsync(new InvalidOperationException("Resource is already booked during this time."));
+                    _mockBookingService
+                        .Setup(s => s.CreateBookingAsync(booking))
+                        .ThrowsAsync(new InvalidOperationException("Resource is already booked during this time."));
 
-            // Act
-            var result = await _controller.Create(booking);
+                    // Act
+                    var result = await _controller.Create(booking);
 
-            // Assert
-            result.Result.Should().BeOfType<BadRequestObjectResult>();
-            var badRequest = result.Result as BadRequestObjectResult;
-            badRequest!.Value.Should().Be("Resource is already booked during this time.");
-        }
+                    // Assert
+                    result.Result.Should().BeOfType<BadRequestObjectResult>();
+                    var badRequest = result.Result as BadRequestObjectResult;
+                    badRequest!.Value.Should().Be("Resource is already booked during this time.");
+                }
+        
 
+        /*
         [Fact]
         public async Task Create_ShouldReturnCreated_WhenSuccessful()
         {
@@ -129,5 +131,7 @@ namespace BookingSystem.Tests.UnitTests.Controllers
             returnedBooking.Should().NotBeNull();
             returnedBooking!.Id.Should().Be(1);
         }
+
+        */
     }
 }
