@@ -24,6 +24,21 @@ namespace BookingSystem.Tests.UnitTests.Controllers
             _controller = new BookingsController(_mockBookingService.Object);
         }
 
+        // Helper: simulate an authenticated user in the controller context
+        private void SetControllerUser(int userId)
+        {
+            var claims = new List<System.Security.Claims.Claim>
+            {
+                new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier, userId.ToString())
+            };
+            var identity = new System.Security.Claims.ClaimsIdentity(claims, "Test");
+            var principal = new System.Security.Claims.ClaimsPrincipal(identity);
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext { User = principal }
+            };
+        }
+
         [Fact]
         public async Task GetAll_ShouldReturnOk_WithBookings()
         {
@@ -96,35 +111,38 @@ namespace BookingSystem.Tests.UnitTests.Controllers
         public async Task Create_ShouldReturnBadRequest_WhenServiceThrowsInvalidOperationException()
         {
             // Arrange
-            var booking = new Booking { Id = 1, ResourceId = 1 };
-            
+            SetControllerUser(1);
+            var request = new CreateBookingRequest(DateTime.UtcNow, DateTime.UtcNow.AddHours(1), 1);
+
             _mockBookingService
-                .Setup(s => s.CreateBookingAsync(booking))
-                .ThrowsAsync(new InvalidOperationException("Resource is already booked during this time."));
+                .Setup(s => s.CreateBookingAsync(It.IsAny<Booking>()))
+                .ThrowsAsync(new InvalidOperationException("Studio is already reserved at that time."));
 
             // Act
-            var result = await _controller.Create(booking);
+            var result = await _controller.Create(request);
 
             // Assert
-            result.Result.Should().BeOfType<BadRequestObjectResult>();
-            var badRequest = result.Result as BadRequestObjectResult;
-            badRequest!.Value.Should().Be("Resource is already booked during this time.");
+            var badRequest = result as BadRequestObjectResult;
+            badRequest.Should().NotBeNull();
+            var value = badRequest!.Value;
+            value.Should().BeEquivalentTo(new { message = "Studio is already reserved at that time." });
         }
 
         [Fact]
         public async Task Create_ShouldReturnCreated_WhenSuccessful()
         {
             // Arrange
-            var booking = new Booking { Id = 1, ResourceId = 1 };
+            SetControllerUser(1);
+            var request = new CreateBookingRequest(DateTime.UtcNow, DateTime.UtcNow.AddHours(1), 1);
             var returnedDto = new BookingDto { Id = 1, ResourceId = 1 };
-            _mockBookingService.Setup(s => s.CreateBookingAsync(booking)).ReturnsAsync(returnedDto);
+            _mockBookingService.Setup(s => s.CreateBookingAsync(It.IsAny<Booking>())).ReturnsAsync(returnedDto);
 
             // Act
-            var result = await _controller.Create(booking);
+            var result = await _controller.Create(request);
 
             // Assert
-            result.Result.Should().BeOfType<CreatedAtActionResult>();
-            var createdResult = result.Result as CreatedAtActionResult;
+            var createdResult = result as CreatedAtActionResult;
+            createdResult.Should().NotBeNull();
             var returnedBooking = createdResult!.Value as BookingDto;
             returnedBooking.Should().NotBeNull();
             returnedBooking!.Id.Should().Be(1);

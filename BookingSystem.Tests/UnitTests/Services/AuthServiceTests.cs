@@ -53,7 +53,7 @@ namespace BookingSystem.Tests.UnitTests.Services
                 .ReturnsAsync(IdentityResult.Success);
 
             // Act
-            var user = await _authService.RegisterAsync(username, email, password);
+            var user = await _authService.RegisterAsync(username, "Test", "User", email, password);
 
             // Assert
             user.Should().NotBeNull();
@@ -78,7 +78,7 @@ namespace BookingSystem.Tests.UnitTests.Services
                 .ReturnsAsync(failedResult);
 
             // Act
-            Func<Task> action = async () => await _authService.RegisterAsync(username, email, password);
+            Func<Task> action = async () => await _authService.RegisterAsync(username, "Fail", "User", email, password);
 
             // Assert
             await action.Should().ThrowAsync<InvalidOperationException>()
