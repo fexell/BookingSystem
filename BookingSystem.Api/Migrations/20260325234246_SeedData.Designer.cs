@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -9,9 +10,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BookingSystem.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260325234246_SeedData")]
+    partial class SeedData
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.5");
@@ -22,21 +25,8 @@ namespace BookingSystem.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
                     b.Property<DateTime>("EndTime")
                         .HasColumnType("TEXT");
-
-                    b.Property<string>("FirstName")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Notes")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("PartySize")
-                        .HasColumnType("INTEGER");
 
                     b.Property<int>("ResourceId")
                         .HasColumnType("INTEGER");
@@ -45,10 +35,6 @@ namespace BookingSystem.Api.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Surname")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -62,36 +48,6 @@ namespace BookingSystem.Api.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Bookings");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CreatedAt = new DateTime(2026, 3, 20, 10, 0, 0, 0, DateTimeKind.Unspecified),
-                            EndTime = new DateTime(2026, 3, 27, 12, 0, 0, 0, DateTimeKind.Unspecified),
-                            FirstName = "Anna",
-                            Notes = "Need drumset",
-                            PartySize = 2,
-                            ResourceId = 1,
-                            StartTime = new DateTime(2026, 3, 27, 10, 0, 0, 0, DateTimeKind.Unspecified),
-                            Status = "Active",
-                            Surname = "Svensson",
-                            UserId = 2
-                        },
-                        new
-                        {
-                            Id = 2,
-                            CreatedAt = new DateTime(2026, 3, 20, 11, 0, 0, 0, DateTimeKind.Unspecified),
-                            EndTime = new DateTime(2026, 3, 27, 15, 0, 0, 0, DateTimeKind.Unspecified),
-                            FirstName = "Erik",
-                            Notes = "Acoustic session",
-                            PartySize = 1,
-                            ResourceId = 2,
-                            StartTime = new DateTime(2026, 3, 27, 13, 0, 0, 0, DateTimeKind.Unspecified),
-                            Status = "Active",
-                            Surname = "Johansson",
-                            UserId = 3
-                        });
                 });
 
             modelBuilder.Entity("BookingSystem.Api.Models.RefreshToken", b =>
@@ -144,48 +100,6 @@ namespace BookingSystem.Api.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Resources");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Description = "Big recording studio with drums, guitar amps, and a vocal booth.",
-                            IsAvailable = true,
-                            Name = "Studio A",
-                            Type = "Studio"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Description = "Smaller studio, perfect for vocals and acoustic instruments.",
-                            IsAvailable = true,
-                            Name = "Studio B",
-                            Type = "Studio"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Description = "Fender Twin Reverb, great for clean tones and classic rock.",
-                            IsAvailable = true,
-                            Name = "Guitar Amp",
-                            Type = "Equipment"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Description = "Soundproof booth with a condenser microphone and pop filter.",
-                            IsAvailable = true,
-                            Name = "Vocal Booth",
-                            Type = "Equipment"
-                        },
-                        new
-                        {
-                            Id = 5,
-                            Description = "Room with mixing console, monitors, and recording software.",
-                            IsAvailable = true,
-                            Name = "Control Room",
-                            Type = "Studio"
-                        });
                 });
 
             modelBuilder.Entity("BookingSystem.Api.Models.User", b =>
@@ -208,13 +122,14 @@ namespace BookingSystem.Api.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("FirstName")
-                        .HasColumnType("TEXT");
-
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTimeOffset?>("LockoutEnd")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("NormalizedEmail")
@@ -237,9 +152,6 @@ namespace BookingSystem.Api.Migrations
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Surname")
-                        .HasColumnType("TEXT");
-
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("INTEGER");
 
@@ -257,62 +169,6 @@ namespace BookingSystem.Api.Migrations
                         .HasDatabaseName("UserNameIndex");
 
                     b.ToTable("AspNetUsers", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            AccessFailedCount = 0,
-                            ConcurrencyStamp = "admin-concurrency-stamp-001",
-                            Email = "admin@studio.se",
-                            EmailConfirmed = true,
-                            FirstName = "Peter",
-                            LockoutEnabled = false,
-                            NormalizedEmail = "ADMIN@STUDIO.SE",
-                            NormalizedUserName = "ADMIN",
-                            PasswordHash = "AQAAAAIAAYagAAAAEFwcWzGVTcou6m4l3QfSB1EXixnj2xMRgwNCPUyCPdXWB7FxPFlwxCeszH1WVlxU+A==",
-                            PhoneNumberConfirmed = false,
-                            SecurityStamp = "admin-security-stamp-001",
-                            Surname = "Andersson",
-                            TwoFactorEnabled = false,
-                            UserName = "admin"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            AccessFailedCount = 0,
-                            ConcurrencyStamp = "anna-concurrency-stamp-002",
-                            Email = "anna@user.com",
-                            EmailConfirmed = true,
-                            FirstName = "Anna",
-                            LockoutEnabled = false,
-                            NormalizedEmail = "ANNA@USER.COM",
-                            NormalizedUserName = "ANNA",
-                            PasswordHash = "AQAAAAIAAYagAAAAEI/PR+O8rGS5fyDzwjlV8EljBATSnF2r3ewX9LhFkrMR4FBn1zAWU+1Yvz+uPsWZlg==",
-                            PhoneNumberConfirmed = false,
-                            SecurityStamp = "anna-security-stamp-002",
-                            Surname = "Svensson",
-                            TwoFactorEnabled = false,
-                            UserName = "anna"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            AccessFailedCount = 0,
-                            ConcurrencyStamp = "erik-concurrency-stamp-003",
-                            Email = "erik@example.com",
-                            EmailConfirmed = true,
-                            FirstName = "Erik",
-                            LockoutEnabled = false,
-                            NormalizedEmail = "ERIK@EXAMPLE.COM",
-                            NormalizedUserName = "ERIK",
-                            PasswordHash = "AQAAAAIAAYagAAAAENKjH98XL+b364+OivWCDlVt9xdw/rUR4JIT9geVokYZWpybdfuKp71pqEIJyPUOrg==",
-                            PhoneNumberConfirmed = false,
-                            SecurityStamp = "erik-security-stamp-003",
-                            Surname = "Johansson",
-                            TwoFactorEnabled = false,
-                            UserName = "erik"
-                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<int>", b =>
@@ -340,22 +196,6 @@ namespace BookingSystem.Api.Migrations
                         .HasDatabaseName("RoleNameIndex");
 
                     b.ToTable("AspNetRoles", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            ConcurrencyStamp = "role-admin-stamp-001",
-                            Name = "Admin",
-                            NormalizedName = "ADMIN"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            ConcurrencyStamp = "role-admin-stamp-002",
-                            Name = "User",
-                            NormalizedName = "USER"
-                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
@@ -436,23 +276,6 @@ namespace BookingSystem.Api.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("AspNetUserRoles", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            UserId = 1,
-                            RoleId = 1
-                        },
-                        new
-                        {
-                            UserId = 2,
-                            RoleId = 2
-                        },
-                        new
-                        {
-                            UserId = 3,
-                            RoleId = 2
-                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<int>", b =>

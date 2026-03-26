@@ -76,6 +76,14 @@ namespace BookingSystem.Api.Controllers {
         public async Task<IActionResult> Delete( int id ) {
             await _bookingService.DeleteBookingAsync( id );
             return NoContent();
+        }  
+
+        [HttpGet("user/me")]
+        public async Task<IActionResult> GetMyBookings()
+        {
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+        var bookings = await _bookingService.GetBookingsByUserIdAsync(userId);
+        return Ok(bookings);
         }
     }
 }
