@@ -1,0 +1,228 @@
+﻿@page "/studios"
+@using BookingSystem.Client.Services
+@using BookingSystem.Shared.DTOs
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.ComponentModel.DataAnnotations
+@inject IResourceService ResourceService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IBookingService BookingService
+@implements IDisposable
+
+<div class="studios-page">
+    <div class="studios-header">
+        <h1 class="studios-title">Studios</h1>
+        <p class="studios-subtitle">Find and book the perfect space for your session</p>
+    </div>
+
+    @if ( studios is null ) {
+        <div class="studios-grid">
+            @for ( int i = 0; i < 3; i++ ) {
+                <div class="studio-card skeleton-card">
+                    <div class="card-image skeleton-image"></div>
+                    <div class="card-body">
+                        <div class="skeleton-line skeleton-title"></div>
+                        <div class="skeleton-line skeleton-text"></div>
+                        <div class="skeleton-line skeleton-text short"></div>
+                    </div>
+                </div>
+            }
+        </div>
+    } else if ( !studios.Any() ) {
+        <div class="empty-state">
+            <div class="empty-icon">🎙️</div>
+            <p>No studios available right now.</p>
+        </div>
+    } else {
+        <div class="studios-grid">
+            @foreach ( var studio in studios ) {
+                <div class="studio-card @(studio.IsAvailable ? "available" : "unavailable")">
+                    <div class="card-image">
+                        <div class="card-image-placeholder">
+                            <span class="studio-initial">@studio.Name[ 0 ]</span>
+                        </div>
+                        <span class="status-badge @(studio.IsAvailable ? "badge-available" : "badge-unavailable")">
+                            @(studio.IsAvailable ? "Available" : "Unavailable")
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <div class="card-meta">
+                            <span class="studio-type">@studio.Type</span>
+                        </div>
+                        <h2 class="card-title">@studio.Name</h2>
+                        <p class="card-description">@studio.Description</p>
+                    </div>
+                    <div class="card-footer">
+                        <a class="btn-details" href="/studios/@studio.Id">View Details</a>
+                        @if ( studio.IsAvailable && isLoggedIn ) {
+                            <button class="btn-book" @onclick="() => OpenModal( studio )">Book Now</button>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@* ── Booking Modal ─────────────────────────────────────────── *@
+@if ( showModal && selectedStudio is not null ) {
+    <div class="modal-backdrop" @onclick="CloseModal">
+        <div class="booking-modal" @onclick:stopPropagation="true">
+
+            <div class="modal-header">
+                <div>
+                    <p class="modal-eyebrow">Booking</p>
+                    <h2 class="modal-title">@selectedStudio.Name</h2>
+                </div>
+                <button class="modal-close" @onclick="CloseModal">✕</button>
+            </div>
+
+            <div class="modal-body">
+                <EditForm Model="bookingModel" OnValidSubmit="HandleBooking">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <div class="form-group">
+                        <label>Date</label>
+                        <InputDate @bind-Value="bookingModel.Date" class="form-input" />
+                        <ValidationMessage For="@(() => bookingModel.Date)" class="field-error" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Time</label>
+                        <div class="time-row">
+                            <InputSelect @bind-Value="startHour" class="form-input">
+                                @for ( int h = 7; h <= 21; h++ ) {
+                                    <option value="@h">@h.ToString( "D2" ):00</option>
+                                }
+                            </InputSelect>
+                            <span class="time-sep">→</span>
+                            <InputSelect @bind-Value="endHour" class="form-input">
+                                @for ( int h = 8; h <= 22; h++ ) {
+                                    <option value="@h">@h.ToString( "D2" ):00</option>
+                                }
+                            </InputSelect>
+                        </div>
+                        @if ( endHour <= startHour ) {
+                            <span class="field-error">End time must be after start time.</span>
+                        }
+                    </div>
+
+                    <div class="form-group">
+                        <label>Party Size</label>
+                        <InputNumber @bind-Value="bookingModel.PartySize" class="form-input" min="1" />
+                        <ValidationMessage For="@(() => bookingModel.PartySize)" class="field-error" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Notes <span class="optional">(optional)</span></label>
+                        <InputTextArea @bind-Value="bookingModel.Notes" class="form-input" rows="2" />
+                    </div>
+
+                    @if ( showSuccessMessage ) {
+                        <div class="booking-success">✓ Booking confirmed!</div>
+                    }
+
+                    @if ( bookingError is not null ) {
+                        <div class="field-error" style="margin-bottom: 0.75rem;">@bookingError</div>
+                    }
+
+                    <div class="modal-actions">
+                        <button type="button" class="btn-cancel" @onclick="CloseModal">Cancel</button>
+                        <button type="submit" class="btn-confirm" disabled="@(endHour <= startHour)">
+                            Confirm Booking
+                        </button>
+                    </div>
+                </EditForm>
+            </div>
+
+        </div>
+    </div>
+}
+
+@code {
+    private List<ResourceDto>? studios;
+    private bool isLoggedIn;
+
+    // Modal state
+    private bool showModal;
+    private bool showSuccessMessage;
+    private ResourceDto? selectedStudio;
+    private int startHour = 8;
+    private int endHour = 9;
+    private BookingModel bookingModel = new() { Date = DateTime.Now.AddDays( 1 ) };
+    private string? bookingError;
+
+    protected override async Task OnInitializedAsync() {
+        studios = await ResourceService.GetAvailableResourcesAsync();
+
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        isLoggedIn = authState.User.Identity?.IsAuthenticated ?? false;
+
+        AuthStateProvider.AuthenticationStateChanged += OnAuthStateChanged;
+    }
+
+    private async void OnAuthStateChanged( Task<AuthenticationState> task ) {
+        var authState = await task;
+        isLoggedIn = authState.User.Identity?.IsAuthenticated ?? false;
+        await InvokeAsync( StateHasChanged );
+    }
+
+    public void Dispose() {
+        AuthStateProvider.AuthenticationStateChanged -= OnAuthStateChanged;
+    }
+
+    private void OpenModal( ResourceDto studio ) {
+        selectedStudio = studio;
+        bookingModel = new BookingModel { Date = DateTime.Now.AddDays( 1 ) };
+        startHour = 8;
+        endHour = 9;
+        showSuccessMessage = false;
+        showModal = true;
+        bookingError = null;
+    }
+
+    private void CloseModal() {
+        showModal = false;
+        selectedStudio = null;
+    }
+
+    private async Task HandleBooking() {
+        if ( endHour <= startHour ) return;
+
+        var request = new CreateBookingRequest
+        (
+            StartTime: bookingModel.Date.Date.AddHours( startHour ),
+            EndTime: bookingModel.Date.Date.AddHours( endHour ),
+            ResourceId: selectedStudio!.Id,
+            PartySize: bookingModel.PartySize,
+            Notes: bookingModel.Notes
+        );
+
+        var success = await BookingService.CreateBookingAsync( request );
+
+        if ( success ) {
+            showSuccessMessage = true;
+            bookingError = null;
+
+            // Reset form fields
+            bookingModel = new BookingModel { Date = DateTime.Now.AddDays( 1 ) };
+            startHour = 8;
+            endHour = 9;
+
+            // Force UI refresh
+            await InvokeAsync( StateHasChanged );
+        } else {
+            bookingError = "Booking failed — the studio may no longer be available.";
+        }
+    }
+
+    public class BookingModel {
+        [Required( ErrorMessage = "Please select a date." )]
+        public DateTime Date { get; set; } = DateTime.Now.AddDays( 1 );
+
+        [Range( 1, 100, ErrorMessage = "Party size must be at least 1." )]
+        public int PartySize { get; set; } = 1;
+
+        public string? Notes { get; set; }
+    }
+}

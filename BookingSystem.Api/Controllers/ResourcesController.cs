@@ -18,6 +18,7 @@ namespace BookingSystem.Api.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> GetAll()
         {
             var resources = await _resourceService.GetAllResourcesAsync();
@@ -25,6 +26,7 @@ namespace BookingSystem.Api.Controllers
         }
 
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetById(int id)
         {
             var resource = await _resourceService.GetResourceByIdAsync(id);
@@ -34,6 +36,7 @@ namespace BookingSystem.Api.Controllers
         }
 
         [HttpGet("available")]
+        [AllowAnonymous]
         public async Task<IActionResult> GetAvailable()
         {
             var resources = await _resourceService.GetAvailableResourcesAsync();

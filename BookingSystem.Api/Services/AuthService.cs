@@ -72,7 +72,9 @@ namespace BookingSystem.Api.Services {
             return token;
         }
 
-        public string GenerateToken( User user ) => TokenHelper.GenerateToken( user, _configuration );
+        public async Task<string> GenerateTokenAsync( User user ) {
+            return await TokenHelper.GenerateToken( user, _userManager, _configuration );
+        }
 
         public async Task<User?> RefreshAsync ( string refreshToken ) {
             var stored = await _refreshTokenRepository.GetByTokenAsync( refreshToken );

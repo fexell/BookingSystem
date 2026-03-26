@@ -16,8 +16,6 @@ public record BookingResponse (
     DateTime EndTime,
     string Status,
     int UserId,
-    string Username,
-    string FirstName,
     string Surname,
     int ResourceId,
     string ResourceName,

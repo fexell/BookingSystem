@@ -8,8 +8,6 @@
         public string Status { get; set; } = "Active";
 
         public int UserId { get; set; }
-        public string FirstName { get; set; } = null!;
-        public string Surname { get; set; } = null!;
         public User User { get; set; } = null!;
 
         public int ResourceId { get; set; }
