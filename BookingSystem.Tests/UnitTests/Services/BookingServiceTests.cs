@@ -84,7 +84,7 @@ namespace BookingSystem.Tests.UnitTests.Services
 
             // Assert
             await action.Should().ThrowAsync<InvalidOperationException>()
-                .WithMessage("Resource is already booked during this time.");
+                .WithMessage("Studio is already reserved at that time.");
             
             _mockBookingRepository.Verify(repo => repo.AddAsync(It.IsAny<Booking>()), Times.Never);
         }
@@ -167,7 +167,7 @@ namespace BookingSystem.Tests.UnitTests.Services
             };
 
             _mockBookingRepository
-                .Setup(repo => repo.GetAllAsync())
+                .Setup(repo => repo.GetAllWithIncludesAsync())
                 .ReturnsAsync(bookingsList);
 
             // Act

@@ -37,7 +37,7 @@ namespace BookingSystem.Tests.IntegrationTests.Controllers
                 await db.SaveChangesAsync();
             }
 
-            return authService.GenerateToken(testUser);
+            return await authService.GenerateTokenAsync(testUser);
         }
 
         [Fact]
@@ -106,7 +106,9 @@ namespace BookingSystem.Tests.IntegrationTests.Controllers
             var token = await GetJwtTokenAsync(testUser);
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            var startTime = DateTime.UtcNow.AddDays(1);
+            // Round to nearest whole hour so the service's minute-validation passes
+            var now = DateTime.UtcNow;
+            var startTime = new DateTime(now.Year, now.Month, now.Day, now.Hour, 0, 0, DateTimeKind.Utc).AddDays(1);
             var endTime = startTime.AddHours(2);
 
             using (var scope = _factory.Services.CreateScope())
@@ -131,22 +133,20 @@ namespace BookingSystem.Tests.IntegrationTests.Controllers
                 await db.SaveChangesAsync();
             }
 
-            var requestBooking = new Booking
-            {
-                UserId = testUser.Id,
-                ResourceId = 2,
-                StartTime = startTime.AddHours(1), // Overlaps
-                EndTime = startTime.AddHours(3),
-                Status = "Active"
-            };
+            // Send a CreateBookingRequest DTO that overlaps with the existing booking
+            var requestDto = new CreateBookingRequest(
+                StartTime: startTime.AddHours(1),
+                EndTime:   startTime.AddHours(3),
+                ResourceId: 2
+            );
 
             // Act
-            var response = await client.PostAsJsonAsync("/api/bookings", requestBooking);
+            var response = await client.PostAsJsonAsync("/api/bookings", requestDto);
 
             // Assert
             response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
             var errorText = await response.Content.ReadAsStringAsync();
-            errorText.Should().Contain("Resource is already booked during this time.");
+            errorText.Should().Contain("Studio is already reserved at that time.");
         }
     }
 }
