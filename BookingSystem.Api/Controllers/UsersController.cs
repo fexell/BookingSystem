@@ -1,8 +1,10 @@
-﻿using BookingSystem.Api.Controllers;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+using BookingSystem.Api.Controllers;
 using BookingSystem.Api.Models;
 using BookingSystem.Api.Services;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+using BookingSystem.Api.Helpers;
 
 namespace BookingSystem.Api.Controllers
 {
@@ -19,11 +21,10 @@ namespace BookingSystem.Api.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAll()
         {
             var users = await _userService.GetAllUsersAsync();
-            return Ok(users);
+            return Ok(users.Select(UserMapperHelper.ToResponse));
         }
 
         [HttpGet("{id}")]
