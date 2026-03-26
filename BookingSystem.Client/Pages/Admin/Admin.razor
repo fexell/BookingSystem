@@ -1,0 +1,38 @@
+﻿@page "/admin"
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
+
+<h3>Admin Dashboard</h3>
+
+@if ( !isAdmin ) {
+    <p>Access denied. Redirecting...</p>
+}
+
+@if ( isAdmin ) {
+    <div class="admin-container">
+        <h2>Welcome, Admin</h2>
+        <p>Manage studios, bookings, and users.</p>
+
+        <ul>
+            <li><a href="/admin/studios">Manage Studios</a></li>
+            <li><a href="/admin/bookings">Manage Bookings</a></li>
+            <li><a href="/admin/users">Manage Users</a></li>
+        </ul>
+    </div>
+}
+
+@code {
+    private bool isAdmin;
+
+    protected override async Task OnInitializedAsync() {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        isAdmin = user.IsInRole( "Admin" );
+
+        if ( !isAdmin ) {
+            // Redirect non-admins
+            Navigation.NavigateTo( "/" );
+        }
+    }
+}

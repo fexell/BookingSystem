@@ -1,0 +1,235 @@
+﻿.admin-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.btn-edit {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 0.4rem 0.7rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-delete {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 0.4rem 0.7rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-edit:hover {
+    background: #0069d9;
+}
+
+.btn-delete:hover {
+    background: #c82333;
+}
+
+/* ── Modal Backdrop ─────────────────────────────────────────── */
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+/* ── Admin Modal Container (same as booking modal) ─────────── */
+.admin-modal {
+    background: #ffffff;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 460px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+    animation: fadeIn 0.2s ease-out;
+}
+
+/* ── Modal Header ───────────────────────────────────────────── */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 1.5rem 1.5rem 1rem;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+    .modal-header h2 {
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #111827;
+        margin: 0;
+        letter-spacing: -0.02em;
+    }
+
+.modal-close {
+    background: #f3f4f6;
+    border: none;
+    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    font-size: 0.8rem;
+    color: #6b7280;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+    flex-shrink: 0;
+}
+
+    .modal-close:hover {
+        background: #e5e7eb;
+        color: #111827;
+    }
+
+/* ── Modal Body ─────────────────────────────────────────────── */
+.modal-body {
+    padding: 1.25rem 1.5rem 1.5rem;
+}
+
+/* ── Form Groups ────────────────────────────────────────────── */
+.form-group {
+    margin-bottom: 1rem;
+}
+
+    .form-group label {
+        display: block;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.4rem;
+    }
+
+.optional {
+    font-weight: 400;
+    color: #9ca3af;
+}
+
+/* ── Inputs (same as booking modal) ─────────────────────────── */
+::deep .form-input {
+    width: 100%;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: #111827;
+    background: #f9fafb;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    box-sizing: border-box;
+}
+
+    ::deep .form-input:focus {
+        outline: none;
+        border-color: #7c3aed;
+        box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+        background: #fff;
+    }
+
+/* ── Modal Actions ──────────────────────────────────────────── */
+.modal-actions {
+    display: flex;
+    gap: 0.6rem;
+    margin-top: 1.25rem;
+}
+
+.btn-cancel {
+    flex: 1;
+    padding: 0.6rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+    .btn-cancel:hover {
+        background: #e5e7eb;
+    }
+
+.btn-confirm {
+    flex: 2;
+    padding: 0.6rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(135deg, #7c3aed, #5b21b6);
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+
+    .btn-confirm:hover:not(:disabled) {
+        opacity: 0.9;
+    }
+
+    .btn-confirm:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+    }
+
+/* ── Delete Button (red) ───────────────────────────────────── */
+.btn-delete {
+    flex: 2;
+    padding: 0.6rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #fff;
+    background: #dc2626;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+
+    .btn-delete:hover {
+        opacity: 0.9;
+    }
+
+/* ── Admin Action Buttons on Cards ─────────────────────────── */
+.admin-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.btn-edit {
+    background: #7c3aed;
+    color: white;
+    border: none;
+    padding: 0.4rem 0.7rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+
+    .btn-edit:hover {
+        opacity: 0.85;
+    }
+
+.btn-toggle {
+    background: #6b7280;
+    color: white;
+    border: none;
+    padding: 0.4rem 0.7rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+
+    .btn-toggle:hover {
+        opacity: 0.85;
+    }

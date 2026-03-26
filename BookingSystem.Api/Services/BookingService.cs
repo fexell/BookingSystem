@@ -18,8 +18,16 @@ namespace BookingSystem.Api.Services {
             StartTime = b.StartTime,
             EndTime = b.EndTime,
             Status = b.Status,
+
             UserId = b.UserId,
-            ResourceId = b.ResourceId
+            UserName = b.User?.UserName ?? string.Empty,
+            UserEmail = b.User?.Email ?? string.Empty,
+
+            ResourceId = b.ResourceId,
+            ResourceName = b.Resource?.Name ?? string.Empty,
+
+            PartySize = b.PartySize,
+            Notes = b.Notes
         };
 
         public async Task<IEnumerable<BookingDto>> GetAllBookingsAsync() {

@@ -1,0 +1,208 @@
+﻿@page "/admin/studios"
+@using BookingSystem.Client.Services
+@using BookingSystem.Shared.DTOs
+@using System.ComponentModel.DataAnnotations
+@inject IResourceService ResourceService
+
+<div class="studios-page">
+    <div class="studios-header">
+        <h1 class="studios-title">Admin – Studios</h1>
+        <p class="studios-subtitle">Manage all studios in the system</p>
+
+        <button class="btn-create" @onclick="OpenCreateModal">+ Create New Studio</button>
+    </div>
+
+    @if ( studios is null ) {
+        <div class="studios-grid">
+            @for ( int i = 0; i < 3; i++ ) {
+                <div class="studio-card skeleton-card">
+                    <div class="card-image skeleton-image"></div>
+                    <div class="card-body">
+                        <div class="skeleton-line skeleton-title"></div>
+                        <div class="skeleton-line skeleton-text"></div>
+                        <div class="skeleton-line skeleton-text short"></div>
+                    </div>
+                </div>
+            }
+        </div>
+    } else if ( !studios.Any() ) {
+        <div class="empty-state">
+            <div class="empty-icon">🎙️</div>
+            <p>No studios found.</p>
+        </div>
+    } else {
+        <div class="studios-grid">
+            @foreach ( var studio in studios ) {
+                <div class="studio-card @(studio.IsAvailable ? "available" : "unavailable")">
+                    <div class="card-image">
+                        <div class="card-image-placeholder">
+                            <span class="studio-initial">@studio.Name[ 0 ]</span>
+                        </div>
+                        <span class="status-badge @(studio.IsAvailable ? "badge-available" : "badge-unavailable")">
+                            @(studio.IsAvailable ? "Available" : "Unavailable")
+                        </span>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="card-meta">
+                            <span class="studio-type">@studio.Type</span>
+                        </div>
+                        <h2 class="card-title">@studio.Name</h2>
+                        <p class="card-description">@studio.Description</p>
+                    </div>
+
+                    <div class="card-footer admin-actions">
+                        <button class="btn-edit" @onclick="() => OpenEditModal( studio )">Edit</button>
+                        <button class="btn-delete" @onclick="() => OpenDeleteModal( studio )">Delete</button>
+                        <button class="btn-toggle" @onclick="() => ToggleStatus( studio )">
+                            @(studio.IsAvailable ? "Set Unavailable" : "Set Available")
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@* ──────────────────────────────── CREATE / EDIT MODAL ──────────────────────────────── *@
+@if ( showEditModal ) {
+    <div class="modal-backdrop" @onclick="CloseModals">
+        <div class="admin-modal" @onclick:stopPropagation="true">
+
+            <div class="modal-header">
+                <h2>@(isEditing ? "Edit Studio" : "Create Studio")</h2>
+                <button class="modal-close" @onclick="CloseModals">✕</button>
+            </div>
+
+            <div class="modal-body">
+                <EditForm Model="editModel" OnValidSubmit="SaveStudio">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <div class="form-group">
+                        <label>Name</label>
+                        <InputText @bind-Value="editModel.Name" class="form-input" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Type</label>
+                        <InputText @bind-Value="editModel.Type" class="form-input" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Description</label>
+                        <InputTextArea @bind-Value="editModel.Description" class="form-input" rows="3" />
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="button" class="btn-cancel" @onclick="CloseModals">Cancel</button>
+                        <button type="submit" class="btn-confirm">Save</button>
+                    </div>
+                </EditForm>
+            </div>
+
+        </div>
+    </div>
+}
+
+@* ──────────────────────────────── DELETE CONFIRMATION ──────────────────────────────── *@
+@if ( showDeleteModal ) {
+    <div class="modal-backdrop" @onclick="CloseModals">
+        <div class="admin-modal" @onclick:stopPropagation="true">
+
+            <div class="modal-header">
+                <h2>Delete Studio</h2>
+                <button class="modal-close" @onclick="CloseModals">✕</button>
+            </div>
+
+            <div class="modal-body">
+                <p>Are you sure you want to delete <strong>@selectedStudio?.Name</strong>?</p>
+
+                <div class="modal-actions">
+                    <button class="btn-cancel" @onclick="CloseModals">Cancel</button>
+                    <button class="btn-delete" @onclick="DeleteStudio">Delete</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+}
+
+@code {
+    private List<ResourceDto>? studios;
+
+    private bool showEditModal;
+    private bool showDeleteModal;
+    private bool isEditing;
+
+    private ResourceDto? selectedStudio;
+
+    private StudioEditModel editModel = new();
+
+    protected override async Task OnInitializedAsync() {
+        studios = await ResourceService.GetAllResourcesAsync();
+    }
+
+    private void OpenCreateModal() {
+        isEditing = false;
+        editModel = new StudioEditModel();
+        showEditModal = true;
+    }
+
+    private void OpenEditModal( ResourceDto studio ) {
+        isEditing = true;
+        selectedStudio = studio;
+
+        editModel = new StudioEditModel {
+            Name = studio.Name,
+            Type = studio.Type,
+            Description = studio.Description
+        };
+
+        showEditModal = true;
+    }
+
+    private void OpenDeleteModal( ResourceDto studio ) {
+        selectedStudio = studio;
+        showDeleteModal = true;
+    }
+
+    private void CloseModals() {
+        showEditModal = false;
+        showDeleteModal = false;
+        selectedStudio = null;
+    }
+
+    private async Task SaveStudio() {
+        if ( isEditing ) {
+            await ResourceService.UpdateResourceAsync( selectedStudio!.Id, editModel );
+        } else {
+            await ResourceService.CreateResourceAsync( editModel );
+        }
+
+        studios = await ResourceService.GetAvailableResourcesAsync();
+        CloseModals();
+    }
+
+    private async Task DeleteStudio() {
+        await ResourceService.DeleteResourceAsync( selectedStudio!.Id );
+        studios = await ResourceService.GetAvailableResourcesAsync();
+        CloseModals();
+    }
+
+    private async Task ToggleStatus( ResourceDto studio ) {
+        await ResourceService.ToggleStatusAsync( studio.Id );
+        studios = await ResourceService.GetAllResourcesAsync();
+    }
+
+    public class StudioEditModel {
+        [Required(ErrorMessage = "Name is required.")]
+        public string Name { get; set; } = "";
+
+        [Required(ErrorMessage = "Type is required.")]
+        public string Type { get; set; } = "";
+
+        [Required(ErrorMessage = "Description is required")]
+        public string Description { get; set; } = "";
+    }
+}

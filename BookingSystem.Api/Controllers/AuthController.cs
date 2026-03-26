@@ -74,9 +74,12 @@ namespace BookingSystem.Api.Controllers
             var accessToken = await _authService.GenerateTokenAsync( user );
             var refreshToken = await _authService.GenerateRefreshTokenAsync( user );
 
+            var roles = await _userManager.GetRolesAsync( user );
+
             Response.Cookies.Append( "jwt", accessToken, CookieHelper.GetCookieOptions() );
             Response.Cookies.Append( "refreshToken", refreshToken, CookieHelper.GetCookieOptions() );
             Response.Cookies.Append( "userId", user.Id.ToString(), CookieHelper.GetCookieOptions( httpOnly: false ) );
+            Response.Cookies.Append( "roles", string.Join( ",", roles ), CookieHelper.GetCookieOptions( httpOnly: false ) );
 
             return Ok( new { userId = user.Id, message = "Login successful!" } );
         }

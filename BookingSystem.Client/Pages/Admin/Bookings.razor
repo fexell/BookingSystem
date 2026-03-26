@@ -1,0 +1,106 @@
+﻿@page "/admin/bookings"
+@using BookingSystem.Shared.DTOs
+@using BookingSystem.Client.Services
+@inject IBookingService BookingService
+@inject IResourceService ResourceService
+
+<div class="admin-page">
+    <div class="admin-header">
+        <h1 class="admin-title">Admin – Bookings</h1>
+        <p class="admin-subtitle">Manage all bookings in the system</p>
+    </div>
+
+    @if ( bookings is null ) {
+        <p>Loading bookings...</p>
+    } else if ( !bookings.Any() ) {
+        <div class="empty-state">
+            <div class="empty-icon">📅</div>
+            <p>No bookings found.</p>
+        </div>
+    } else {
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Studio</th>
+                    <th>User</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Party Size</th>
+                    <th>Notes</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ( var b in bookings ) {
+                    <tr>
+                        <td>@b.ResourceName</td>
+                        <td>@b.UserName</td>
+                        <td>@b.StartTime.ToString( "yyyy-MM-dd" )</td>
+                        <td>@b.StartTime.ToString( "HH:mm" ) – @b.EndTime.ToString( "HH:mm" )</td>
+                        <td>@b.PartySize</td>
+                        <td>@b.Notes</td>
+                        <td>
+                            <button class="btn-delete" @onclick="() => OpenDeleteModal( b )">Delete</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@* ──────────────────────────────── DELETE CONFIRMATION ──────────────────────────────── *@
+@if ( showDeleteModal ) {
+    <div class="modal-backdrop" @onclick="CloseModals">
+        <div class="admin-modal" @onclick:stopPropagation="true">
+
+            <div class="modal-header">
+                <h2>Delete Booking</h2>
+                <button class="modal-close" @onclick="CloseModals">✕</button>
+            </div>
+
+            <div class="modal-body">
+                <p>
+                    Are you sure you want to delete this booking for
+                    <strong>@selectedBooking?.ResourceName</strong> on
+                    <strong>@selectedBooking?.StartTime.ToString( "yyyy-MM-dd" )</strong>?
+                </p>
+
+                <div class="modal-actions">
+                    <button class="btn-cancel" @onclick="CloseModals">Cancel</button>
+                    <button class="btn-delete" @onclick="DeleteBooking">Delete</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+}
+
+@code {
+    private List<BookingDto>? bookings;
+    private BookingDto? selectedBooking;
+    private bool showDeleteModal;
+
+    protected override async Task OnInitializedAsync() {
+        bookings = await BookingService.GetAllBookingsAsync();
+    }
+
+    private void OpenDeleteModal( BookingDto booking ) {
+        selectedBooking = booking;
+        showDeleteModal = true;
+    }
+
+    private void CloseModals() {
+        showDeleteModal = false;
+        selectedBooking = null;
+    }
+
+    private async Task DeleteBooking() {
+        if ( selectedBooking is null ) return;
+
+        await BookingService.DeleteBookingAsync( selectedBooking.Id );
+        bookings = await BookingService.GetAllBookingsAsync();
+
+        CloseModals();
+    }
+}

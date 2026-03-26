@@ -68,5 +68,18 @@ namespace BookingSystem.Api.Controllers
             await _resourceService.DeleteResourceAsync(id);
             return NoContent();
         }
+
+        [HttpPatch( "{id}/toggle" )]
+        [Authorize( Roles = "Admin" )]
+        public async Task<IActionResult> ToggleStatus( int id ) {
+            var resource = await _resourceService.GetResourceByIdAsync( id );
+            if ( resource == null )
+                return NotFound();
+
+            resource.IsAvailable = !resource.IsAvailable;
+            await _resourceService.UpdateResourceAsync( resource );
+
+            return NoContent();
+        }
     }
 }
