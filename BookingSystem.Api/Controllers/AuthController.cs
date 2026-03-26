@@ -71,7 +71,7 @@ namespace BookingSystem.Api.Controllers
             if ( user == null )
                 return Unauthorized( new { message = "Wrong credentials!" } );
 
-            var accessToken = _authService.GenerateToken( user );
+            var accessToken = await _authService.GenerateTokenAsync( user );
             var refreshToken = await _authService.GenerateRefreshTokenAsync( user );
 
             Response.Cookies.Append( "jwt", accessToken, CookieHelper.GetCookieOptions() );

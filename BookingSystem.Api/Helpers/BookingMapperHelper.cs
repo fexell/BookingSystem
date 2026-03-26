@@ -12,8 +12,6 @@ public static class  BookingMapperHelper {
     b.Status,
     b.UserId,
     b.User.UserName,
-    b.FirstName,
-    b.Surname,
     b.ResourceId,
     b.Resource.Name,
     b.PartySize,

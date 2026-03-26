@@ -69,7 +69,7 @@ builder.Services.AddAuthentication( options => {
                 var user = await authService.RefreshAsync( refresh );
 
                 if ( user != null ) {
-                    var newAccess = authService.GenerateToken( user );
+                    var newAccess = await authService.GenerateTokenAsync( user );
                     var newRefresh = await authService.GenerateRefreshTokenAsync( user );
 
                     context.Response.Cookies.Append( "jwt", newAccess, CookieHelper.GetCookieOptions() );

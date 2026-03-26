@@ -119,12 +119,6 @@ code {
 }
 
 /* ── Auth modal overlay ── */
-.auth-success {
-    color: #28a745;
-    margin-top: 0.5rem;
-    font-weight: 600;
-}
-
 .auth-modal-overlay {
     position: fixed;
     inset: 0;
