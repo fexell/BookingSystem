@@ -1,0 +1,22 @@
+﻿@page "/studios/{id:int}"
+@using BookingSystem.Shared.DTOs
+@using BookingSystem.Client.Services
+@inject IResourceService ResourceService
+
+@if ( studio is null ) {
+    <p>Loading...</p>
+} else {
+    <h1>@studio.Name</h1>
+    <p>@studio.Description</p>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private ResourceDto? studio;
+
+    protected override async Task OnInitializedAsync() {
+        studio = await ResourceService.GetResourceByIdAsync( Id );
+    }
+}

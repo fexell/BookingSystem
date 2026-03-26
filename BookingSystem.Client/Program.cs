@@ -15,6 +15,7 @@ builder.Services.AddScoped<AuthenticationStateProvider>( sp =>
     sp.GetRequiredService<CustomAuthStateProvider>() );
 builder.Services.AddScoped<CookieHandler>();
 builder.Services.AddScoped<IResourceService, ResourceService>();
+builder.Services.AddScoped<IBookingService, BookingService>();
 
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
