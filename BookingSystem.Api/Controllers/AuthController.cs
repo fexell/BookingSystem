@@ -84,8 +84,6 @@ namespace BookingSystem.Api.Controllers
             return Ok( new { userId = user.Id, message = "Login successful!" } );
         }
 
-        // Om användaren är verkligen inloggad så kan vi låta dom logga ut
-        [Authorize]
         [HttpPost( "logout" )]
         public async Task<IActionResult> Logout () {
             var refreshToken = Request.Cookies[ "refreshToken" ];
