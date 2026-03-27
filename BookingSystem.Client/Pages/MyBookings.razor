@@ -1,4 +1,8 @@
 ﻿@page "/mybookings"
+@using Microsoft.AspNetCore.Authorization
+@using BookingSystem.Shared.DTOs
+@attribute [Authorize]
+@inject IHttpClientFactory HttpClientFactory
 
 <h3>Mina Bokningar</h3>
 <hr />
@@ -14,29 +18,28 @@ else if (bookings.Count == 0)
 else
 {
     <div class="row">
-       
         @foreach (var booking in bookings)
         {
             <div class="col-md-4 mb-4">
                 <div class="card shadow-sm h-100">
                     <div class="card-body">
                         <h5 class="card-title">@booking.ResourceName</h5>
-                        <h6 class="card-subtitle mb-2 text-muted">@booking.Date.ToString("yyyy-MM-dd kl. HH:mm")</h6>
-                        
+                        <h6 class="card-subtitle mb-2 text-muted">
+                            @booking.StartTime.ToString("yyyy-MM-dd kl. HH:mm") - @booking.EndTime.ToString("HH:mm")
+                        </h6>
                         <p class="card-text mt-3">
-                            Status:
-                            @if (booking.IsConfirmed)
-                            {
-                                <span class="badge bg-success">Bekräftad</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-warning text-dark">Väntar på godkännande</span>
-                            }
+                            Status: <span class="badge bg-success">@booking.Status</span>
                         </p>
+                        @if (!string.IsNullOrEmpty(booking.Notes))
+                        {
+                            <p class="card-text"><small>@booking.Notes</small></p>
+                        }
                     </div>
                     <div class="card-footer bg-transparent border-top-0">
-                        <button class="btn btn-outline-danger btn-sm w-100">Avboka</button>
+                        <button class="btn btn-outline-danger btn-sm w-100"
+                                @onclick="() => CancelBooking(booking.Id)">
+                            Avboka
+                        </button>
                     </div>
                 </div>
             </div>
@@ -45,24 +48,37 @@ else
 }
 
 @code {
-    
-    private List<BookingMock> bookings = new();
+    private List<BookingDto>? bookings;
 
-   
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-     
-        bookings.Add(new BookingMock { Id = 1, ResourceName = "Grupprum A", Date = DateTime.Now.AddDays(2), IsConfirmed = true });
-        bookings.Add(new BookingMock { Id = 2, ResourceName = "Projektor 4K", Date = DateTime.Now.AddDays(5), IsConfirmed = false });
-        bookings.Add(new BookingMock { Id = 3, ResourceName = "Konferenssalen", Date = DateTime.Now.AddDays(10), IsConfirmed = true });
+        await LoadBookings();
     }
 
-    
-    public class BookingMock
+    private async Task LoadBookings()
     {
-        public int Id { get; set; }
-        public string ResourceName { get; set; } = string.Empty;
-        public DateTime Date { get; set; }
-        public bool IsConfirmed { get; set; }
+        try
+        {
+            var client = HttpClientFactory.CreateClient("API");
+            bookings = await client.GetFromJsonAsync<List<BookingDto>>("api/bookings/user/me");
+        }
+        catch
+        {
+            bookings = new List<BookingDto>();
+        }
+    }
+
+    private async Task CancelBooking(int id)
+    {
+        try
+        {
+            var client = HttpClientFactory.CreateClient("API");
+            var response = await client.DeleteAsync($"api/bookings/{id}");
+            if (response.IsSuccessStatusCode)
+            {
+                await LoadBookings();
+            }
+        }
+        catch { }
     }
 }

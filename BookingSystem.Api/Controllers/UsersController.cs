@@ -1,10 +1,10 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-
-using BookingSystem.Api.Controllers;
+﻿using BookingSystem.Api.Controllers;
+using BookingSystem.Api.Helpers;
 using BookingSystem.Api.Models;
 using BookingSystem.Api.Services;
-using BookingSystem.Api.Helpers;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace BookingSystem.Api.Controllers
 {
@@ -34,6 +34,16 @@ namespace BookingSystem.Api.Controllers
             if (user == null)
                 return NotFound();
             return Ok(user);
+        }
+
+        [HttpGet("me")]
+        public async Task<IActionResult> GetMe()
+        {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var user = await _userService.GetUserByIdAsync(userId);
+            if (user == null)
+                return NotFound();
+            return Ok(UserMapperHelper.ToResponse(user));
         }
 
         [HttpPut("{id}")]

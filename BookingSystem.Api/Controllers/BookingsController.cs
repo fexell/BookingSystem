@@ -42,6 +42,14 @@ namespace BookingSystem.Api.Controllers {
             return Ok( bookings );
         }
 
+        [HttpGet("user/me")]
+        public async Task<IActionResult> GetMyBookings()
+        {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var bookings = await _bookingService.GetBookingsByUserIdAsync(userId);
+            return Ok(bookings);
+        }
+
         [HttpPost]
         public async Task<IActionResult> Create( CreateBookingRequest request ) {
             var userId = int.Parse( User.FindFirstValue( ClaimTypes.NameIdentifier )! );
