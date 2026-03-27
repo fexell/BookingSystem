@@ -2,22 +2,47 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Navigation
 
-<h3>Admin Dashboard</h3>
-
 @if ( !isAdmin ) {
-    <p>Access denied. Redirecting...</p>
-}
+    <p class="access-denied">Access denied. Redirecting...</p>
+} else {
+    <div class="dashboard">
 
-@if ( isAdmin ) {
-    <div class="admin-container">
-        <h2>Welcome, Admin</h2>
-        <p>Manage studios, bookings, and users.</p>
+        <div class="dashboard-hero">
+            <div class="hero-eyebrow">Control Panel</div>
+            <h1 class="hero-title">Admin Dashboard</h1>
+            <p class="hero-sub">Manage your studios, bookings, and users from one place.</p>
+        </div>
 
-        <ul>
-            <li><a href="/admin/studios">Manage Studios</a></li>
-            <li><a href="/admin/bookings">Manage Bookings</a></li>
-            <li><a href="/admin/users">Manage Users</a></li>
-        </ul>
+        <div class="dashboard-grid">
+
+            <a href="/admin/studios" class="dash-card card-studios">
+                <div class="card-icon">🎙️</div>
+                <div class="card-content">
+                    <div class="card-label">Studios</div>
+                    <div class="card-desc">Create, edit, and toggle availability of recording spaces.</div>
+                </div>
+                <div class="card-arrow">→</div>
+            </a>
+
+            <a href="/admin/bookings" class="dash-card card-bookings">
+                <div class="card-icon">📅</div>
+                <div class="card-content">
+                    <div class="card-label">Bookings</div>
+                    <div class="card-desc">Review, approve, and manage all studio reservations.</div>
+                </div>
+                <div class="card-arrow">→</div>
+            </a>
+
+            <a href="/admin/users" class="dash-card card-users">
+                <div class="card-icon">👥</div>
+                <div class="card-content">
+                    <div class="card-label">Users</div>
+                    <div class="card-desc">Edit accounts, assign roles, and remove users.</div>
+                </div>
+                <div class="card-arrow">→</div>
+            </a>
+
+        </div>
     </div>
 }
 
@@ -27,11 +52,8 @@
     protected override async Task OnInitializedAsync() {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
-
         isAdmin = user.IsInRole( "Admin" );
-
         if ( !isAdmin ) {
-            // Redirect non-admins
             Navigation.NavigateTo( "/" );
         }
     }
