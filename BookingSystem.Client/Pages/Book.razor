@@ -115,45 +115,42 @@
         resources = await ResourceService.GetAvailableResourcesAsync();
     }
 
-    private async Task HandleBooking()
-    {
-        Console.WriteLine("HandleBooking called!");
+    private async Task HandleBooking() {
+        Console.WriteLine( "HandleBooking called!" );
 
-        if (endHour <= startHour) return;
+        if ( endHour <= startHour ) return;
 
-        try
-        {
+        try {
             var request = new CreateBookingRequest(
-                StartTime: bookingModel.Date.Date.AddHours(startHour),
-                EndTime: bookingModel.Date.Date.AddHours(endHour),
+                StartTime: bookingModel.Date.Date.AddHours( startHour ),
+                EndTime: bookingModel.Date.Date.AddHours( endHour ),
                 ResourceId: bookingModel.ResourceId,
                 PartySize: bookingModel.PartySize,
                 Notes: bookingModel.Notes
             );
 
-            var success = await BookingService.CreateBookingAsync(request);
-            Console.WriteLine($"Booking result: {success}");
+            var result = await BookingService.CreateBookingAsync( request );
+            Console.WriteLine( $"Booking result: Success={result.Success}, Error={result.ErrorMessage}" );
 
-            if (success)
-            {
+            if ( result.Success ) {
                 errorMessage = null;
                 showSuccessMessage = true;
                 StateHasChanged();
-                await Task.Delay(3000);
-                bookingModel = new BookingModel { Date = DateTime.Now.AddDays(1) };
+
+                await Task.Delay( 3000 );
+
+                bookingModel = new BookingModel { Date = DateTime.Now.AddDays( 1 ) };
                 startHour = 8;
                 endHour = 9;
                 showSuccessMessage = false;
+
                 StateHasChanged();
+            } else {
+                // Show backend error if available
+                errorMessage = result.ErrorMessage ?? "Bokningen misslyckades.";
             }
-            else
-            {
-                errorMessage = "Bokningen misslyckades.";
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Exception: {ex.Message}");
+        } catch ( Exception ex ) {
+            Console.WriteLine( $"Exception: {ex.Message}" );
             errorMessage = $"Fel: {ex.Message}";
         }
     }

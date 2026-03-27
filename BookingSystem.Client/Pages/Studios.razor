@@ -198,9 +198,9 @@
             Notes: bookingModel.Notes
         );
 
-        var success = await BookingService.CreateBookingAsync( request );
+        var result = await BookingService.CreateBookingAsync( request );
 
-        if ( success ) {
+        if ( result.Success ) {
             showSuccessMessage = true;
             bookingError = null;
 
@@ -209,10 +209,9 @@
             startHour = 8;
             endHour = 9;
 
-            // Force UI refresh
             await InvokeAsync( StateHasChanged );
         } else {
-            bookingError = "Booking failed — the studio may no longer be available.";
+            bookingError = result.ErrorMessage ?? "Booking failed — the studio may no longer be available.";
         }
     }
 

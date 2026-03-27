@@ -1,5 +1,6 @@
 ﻿using BookingSystem.Shared.DTOs;
 using System.Net.Http.Json;
+using static System.Net.WebRequestMethods;
 
 namespace BookingSystem.Client.Services;
 
@@ -15,10 +16,26 @@ public class BookingService : IBookingService {
     // ───────────────────────────────────────────────────────────────
     // CREATE BOOKING (already implemented)
     // ───────────────────────────────────────────────────────────────
-    public async Task<bool> CreateBookingAsync( CreateBookingRequest request ) {
+    public async Task<BookingResult> CreateBookingAsync( CreateBookingRequest request ) {
         var client = CreateClient();
         var response = await client.PostAsJsonAsync( "api/bookings", request );
-        return response.IsSuccessStatusCode;
+
+        if ( response.IsSuccessStatusCode )
+            return new BookingResult { Success = true };
+
+        // Try to read structured JSON
+        ErrorResponse? errorDto = null;
+
+        try {
+            errorDto = await response.Content.ReadFromJsonAsync<ErrorResponse>();
+        } catch {
+            // fallback if backend didn't return JSON
+        }
+
+        return new BookingResult {
+            Success = false,
+            ErrorMessage = errorDto?.Message ?? "Unknown error occurred."
+        };
     }
 
     // ───────────────────────────────────────────────────────────────
