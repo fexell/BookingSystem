@@ -1,0 +1,390 @@
+﻿/* ── Studio Detail Page ──────────────────────────────────────────────── */
+
+.studio-detail {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 2.5rem 2rem;
+    animation: fadeUp 0.4s ease both;
+}
+
+/* ── Hero ────────────────────────────────────────────────────────────── */
+.detail-hero {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.detail-hero-avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 8px 24px rgba(124, 58, 237, 0.25);
+}
+
+.detail-initial {
+    color: #fff;
+    font-size: 2rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    line-height: 1;
+}
+
+.detail-eyebrow {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #7c3aed;
+    margin-bottom: 0.3rem;
+    font-family: 'Courier New', monospace;
+}
+
+.detail-title {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #111827;
+    letter-spacing: -0.02em;
+    margin: 0 0 0.5rem;
+    line-height: 1.1;
+}
+
+.detail-status-badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.25rem 0.7rem;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.badge-available {
+    background: #d1fae5;
+    color: #059669;
+}
+
+.badge-unavailable {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+/* ── Body ────────────────────────────────────────────────────────────── */
+.detail-body {
+    border-top: 1px solid #f1f5f9;
+    border-bottom: 1px solid #f1f5f9;
+    padding: 1.5rem 0;
+    margin-bottom: 2rem;
+}
+
+.detail-description {
+    font-size: 1rem;
+    color: #475569;
+    line-height: 1.7;
+    margin: 0;
+}
+
+/* ── Actions ─────────────────────────────────────────────────────────── */
+.detail-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.btn-book {
+    padding: 0.7rem 1.75rem;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #7c3aed, #5b21b6);
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.15s;
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+}
+
+    .btn-book:hover:not(:disabled) {
+        opacity: 0.9;
+        transform: translateY(-1px);
+    }
+
+    .btn-book:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+        box-shadow: none;
+    }
+
+.btn-back {
+    font-size: 0.875rem;
+    color: #64748b;
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+    .btn-back:hover {
+        color: #0f172a;
+    }
+
+/* ── Skeleton Loading ────────────────────────────────────────────────── */
+.studio-detail-loading {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 2.5rem 2rem;
+}
+
+.skeleton-hero {
+    height: 72px;
+    width: 72px;
+    border-radius: 18px;
+    background: #e2e8f0;
+    margin-bottom: 1.5rem;
+    animation: shimmer 1.4s infinite;
+}
+
+.skeleton-body {
+    border-top: 1px solid #f1f5f9;
+    padding-top: 1.5rem;
+}
+
+.skeleton-line {
+    height: 14px;
+    border-radius: 4px;
+    background: #e2e8f0;
+    margin-bottom: 0.6rem;
+    animation: shimmer 1.4s infinite;
+}
+
+.skeleton-title {
+    width: 45%;
+    height: 28px;
+    margin-bottom: 1rem;
+}
+
+.skeleton-text {
+    width: 90%;
+}
+
+    .skeleton-text.short {
+        width: 60%;
+    }
+
+/* ── Modal (reuses booking modal styles from BookingModal.razor.css) ── */
+/* These are here as fallback if the booking modal CSS is not globally loaded */
+
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.booking-modal {
+    background: #ffffff;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 460px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    overflow: hidden;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 1.5rem 1.5rem 1rem;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.modal-eyebrow {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #7c3aed;
+    margin: 0 0 0.2rem;
+}
+
+.modal-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0;
+    letter-spacing: -0.02em;
+}
+
+.modal-close {
+    background: #f3f4f6;
+    border: none;
+    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    font-size: 0.8rem;
+    color: #6b7280;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+    flex-shrink: 0;
+}
+
+    .modal-close:hover {
+        background: #e5e7eb;
+        color: #111827;
+    }
+
+.modal-body {
+    padding: 1.25rem 1.5rem 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+    .form-group label {
+        display: block;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.4rem;
+    }
+
+.optional {
+    font-weight: 400;
+    color: #9ca3af;
+}
+
+::deep .form-input {
+    width: 100%;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: #111827;
+    background: #f9fafb;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+    ::deep .form-input:focus {
+        outline: none;
+        border-color: #7c3aed;
+        box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+        background: #fff;
+    }
+
+.time-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.time-sep {
+    color: #9ca3af;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.field-error {
+    display: block;
+    font-size: 0.8rem;
+    color: #ef4444;
+    margin-top: 0.3rem;
+}
+
+.booking-success {
+    background: #ecfdf5;
+    color: #059669;
+    border: 1px solid #a7f3d0;
+    border-radius: 8px;
+    padding: 0.65rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 0.6rem;
+    margin-top: 1.25rem;
+}
+
+.btn-cancel {
+    flex: 1;
+    padding: 0.6rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+    .btn-cancel:hover {
+        background: #e5e7eb;
+    }
+
+.btn-confirm {
+    flex: 2;
+    padding: 0.6rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(135deg, #7c3aed, #5b21b6);
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+
+    .btn-confirm:hover:not(:disabled) {
+        opacity: 0.9;
+    }
+
+    .btn-confirm:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+    }
+
+/* ── Animations ──────────────────────────────────────────────────────── */
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.4;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}

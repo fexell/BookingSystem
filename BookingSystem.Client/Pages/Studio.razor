@@ -1,13 +1,126 @@
 ﻿@page "/studios/{id:int}"
 @using BookingSystem.Shared.DTOs
 @using BookingSystem.Client.Services
+@using System.ComponentModel.DataAnnotations;
 @inject IResourceService ResourceService
+@inject IBookingService BookingService
 
 @if ( studio is null ) {
-    <p>Loading...</p>
+    <div class="studio-detail-loading">
+        <div class="skeleton-hero"></div>
+        <div class="skeleton-body">
+            <div class="skeleton-line skeleton-title"></div>
+            <div class="skeleton-line skeleton-text"></div>
+            <div class="skeleton-line skeleton-text short"></div>
+        </div>
+    </div>
 } else {
-    <h1>@studio.Name</h1>
-    <p>@studio.Description</p>
+    <div class="studio-detail">
+
+        @* ── Hero ── *@
+        <div class="detail-hero">
+            <div class="detail-hero-avatar">
+                <span class="detail-initial">@studio.Name[ 0 ]</span>
+            </div>
+            <div class="detail-hero-info">
+                <div class="detail-eyebrow">@studio.Type</div>
+                <h1 class="detail-title">@studio.Name</h1>
+                <span class="detail-status-badge @(studio.IsAvailable ? "badge-available" : "badge-unavailable")">
+                    @(studio.IsAvailable ? "Available" : "Unavailable")
+                </span>
+            </div>
+        </div>
+
+        @* ── Description ── *@
+        <div class="detail-body">
+            <p class="detail-description">@studio.Description</p>
+        </div>
+
+        @* ── Actions ── *@
+        <div class="detail-actions">
+            @if ( studio.IsAvailable ) {
+                <button class="btn-book" @onclick="OpenBookingModal">Book This Studio</button>
+            } else {
+                <button class="btn-book" disabled>Currently Unavailable</button>
+            }
+            <a class="btn-back" href="/studios">← Back to Studios</a>
+        </div>
+
+    </div>
+}
+
+@* ──────────────────────────────── BOOKING MODAL ──────────────────────────────── *@
+@if ( showBookingModal ) {
+    <div class="modal-backdrop" @onclick="CloseModal">
+        <div class="booking-modal" @onclick:stopPropagation="true">
+
+            <div class="modal-header">
+                <div>
+                    <p class="modal-eyebrow">Booking</p>
+                    <h2 class="modal-title">@studio!.Name</h2>
+                </div>
+                <button class="modal-close" @onclick="CloseModal">✕</button>
+            </div>
+
+            <div class="modal-body">
+
+                @if ( bookingSuccess ) {
+                    <div class="booking-success">✓ Booking confirmed!</div>
+                }
+
+                <EditForm Model="bookingModel" OnValidSubmit="ConfirmBooking">
+                    <DataAnnotationsValidator />
+
+                    <div class="form-group">
+                        <label>Date</label>
+                        <InputDate class="form-input" @bind-Value="bookingModel.Date" min="@DateTime.Today.ToString( "yyyy-MM-dd" )" />
+                        <ValidationMessage For="() => bookingModel.Date" class="field-error" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Time</label>
+                        <div class="time-row">
+                            <InputSelect class="form-input" @bind-Value="bookingModel.StartHour">
+                                @for ( int h = 6; h <= 22; h++ ) {
+                                    <option value="@h">@h.ToString( "D2" ):00</option>
+                                }
+                            </InputSelect>
+                            <span class="time-sep">→</span>
+                            <InputSelect class="form-input" @bind-Value="bookingModel.EndHour">
+                                @for ( int h = 7; h <= 23; h++ ) {
+                                    <option value="@h">@h.ToString( "D2" ):00</option>
+                                }
+                            </InputSelect>
+                        </div>
+                        @if ( bookingModel.EndHour <= bookingModel.StartHour ) {
+                            <span class="field-error">End time must be after start time.</span>
+                        }
+                    </div>
+
+                    <div class="form-group">
+                        <label>Party Size</label>
+                        <InputNumber class="form-input" @bind-Value="bookingModel.PartySize" min="1" />
+                        <ValidationMessage For="() => bookingModel.PartySize" class="field-error" />
+                    </div>
+
+                    <div class="form-group">
+                        <label>Notes <span class="optional">(optional)</span></label>
+                        <InputTextArea class="form-input" @bind-Value="bookingModel.Notes" rows="3" />
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="button" class="btn-cancel" @onclick="CloseModal">Cancel</button>
+                        <button type="submit" class="btn-confirm"
+                                disabled="@(bookingModel.EndHour <= bookingModel.StartHour || isSaving)">
+                            @(isSaving ? "Saving…" : "Confirm Booking")
+                        </button>
+                    </div>
+
+                </EditForm>
+            </div>
+
+        </div>
+    </div>
 }
 
 @code {
@@ -15,8 +128,63 @@
     public int Id { get; set; }
 
     private ResourceDto? studio;
+    private bool showBookingModal;
+    private bool bookingSuccess;
+    private bool isSaving;
+
+    private BookingFormModel bookingModel = new();
 
     protected override async Task OnInitializedAsync() {
         studio = await ResourceService.GetResourceByIdAsync( Id );
+    }
+
+    private void OpenBookingModal() {
+        bookingModel = new BookingFormModel();
+        bookingSuccess = false;
+        showBookingModal = true;
+    }
+
+    private void CloseModal() {
+        showBookingModal = false;
+        bookingSuccess = false;
+    }
+
+    private async Task ConfirmBooking() {
+        if ( bookingModel.EndHour <= bookingModel.StartHour ) return;
+
+        isSaving = true;
+
+        var startTime = bookingModel.Date.Date.AddHours( bookingModel.StartHour );
+        var endTime = bookingModel.Date.Date.AddHours( bookingModel.EndHour );
+
+        var dto = new CreateBookingRequest(
+            StartTime: startTime,
+            EndTime: endTime,
+            ResourceId: Id,
+            PartySize: bookingModel.PartySize,
+            Notes: bookingModel.Notes
+        );
+
+        await BookingService.CreateBookingAsync( dto );
+
+        isSaving = false;
+        bookingSuccess = true;
+
+        await Task.Delay( 1500 );
+        CloseModal();
+    }
+
+    public class BookingFormModel {
+        [Required]
+        public DateTime Date { get; set; } = DateTime.Today;
+
+        public int StartHour { get; set; } = 8;
+        public int EndHour { get; set; } = 9;
+
+        [Required]
+        [Range( 1, 50, ErrorMessage = "Party size must be at least 1." )]
+        public int PartySize { get; set; } = 1;
+
+        public string? Notes { get; set; }
     }
 }
