@@ -16,6 +16,10 @@ builder.Services.AddScoped<AuthenticationStateProvider>( sp =>
 builder.Services.AddScoped<CookieHandler>();
 builder.Services.AddScoped<IResourceService, ResourceService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
+builder.Services.AddScoped<UserService>( sp => {
+    var factory = sp.GetRequiredService<IHttpClientFactory>();
+    return new UserService( factory.CreateClient( "API" ) );
+} );
 
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");

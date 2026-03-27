@@ -5,5 +5,6 @@ public record UserResponse(
     string FirstName,
     string Surname,
     string Username,
-    string Email
+    string Email,
+    string Role
 );

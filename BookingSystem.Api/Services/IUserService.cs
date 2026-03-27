@@ -9,5 +9,6 @@ namespace BookingSystem.Api.Services
         Task<User?> GetUserByEmailAsync(string email);
         Task UpdateUserAsync(User user);
         Task DeleteUserAsync(int id);
+        Task UpdateUserRoleAsync( User user, string newRole );
     }
 }

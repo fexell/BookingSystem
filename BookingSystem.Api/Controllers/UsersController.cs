@@ -2,7 +2,9 @@
 using BookingSystem.Api.Helpers;
 using BookingSystem.Api.Models;
 using BookingSystem.Api.Services;
+using BookingSystem.Shared.DTOs;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -14,44 +16,72 @@ namespace BookingSystem.Api.Controllers
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
+        private readonly UserManager<User> _userManager;
 
-        public UsersController(IUserService userService)
+        public UsersController(IUserService userService, UserManager<User> userManager)
         {
             _userService = userService;
+            _userManager = userManager;
         }
 
+        [Authorize( Roles = "Admin" )]
         [HttpGet]
-        public async Task<IActionResult> GetAll()
-        {
+        public async Task<IActionResult> GetAll() {
             var users = await _userService.GetAllUsersAsync();
-            return Ok(users.Select(UserMapperHelper.ToResponse));
+            var result = new List<UserResponse>();
+
+            foreach ( var user in users ) {
+                var roles = await _userManager.GetRolesAsync( user );
+                result.Add( UserMapperHelper.ToResponse( user, roles ) );
+            }
+
+            return Ok( result );
         }
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
-        {
-            var user = await _userService.GetUserByIdAsync(id);
-            if (user == null)
+        [HttpGet( "{id}" )]
+        public async Task<IActionResult> GetById( int id ) {
+            var requesterId = int.Parse( User.FindFirstValue( ClaimTypes.NameIdentifier )! );
+
+            if ( requesterId != id && !User.IsInRole( "Admin" ) )
+                return Forbid();
+
+            var user = await _userService.GetUserByIdAsync( id );
+            if ( user == null )
                 return NotFound();
-            return Ok(user);
+
+            var roles = await _userManager.GetRolesAsync( user );
+
+            return Ok( UserMapperHelper.ToResponse( user, roles ) );
         }
 
-        [HttpGet("me")]
-        public async Task<IActionResult> GetMe()
-        {
-            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            var user = await _userService.GetUserByIdAsync(userId);
-            if (user == null)
+        [HttpGet( "me" )]
+        public async Task<IActionResult> GetMe() {
+            var userId = int.Parse( User.FindFirstValue( ClaimTypes.NameIdentifier )! );
+            var user = await _userService.GetUserByIdAsync( userId );
+
+            if ( user == null )
                 return NotFound();
-            return Ok(UserMapperHelper.ToResponse(user));
+
+            var roles = await _userManager.GetRolesAsync( user );
+
+            return Ok( UserMapperHelper.ToResponse( user, roles ) );
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, User user)
-        {
-            if (id != user.Id)
-                return BadRequest("ID does not match.");
-            await _userService.UpdateUserAsync(user);
+        [Authorize( Roles = "Admin" )]
+        [HttpPut( "{id}" )]
+        public async Task<IActionResult> Update( int id, UpdateUserDto dto ) {
+            var user = await _userService.GetUserByIdAsync( id );
+            if ( user == null )
+                return NotFound();
+
+            user.Email = dto.Email;
+            user.UserName = dto.UserName;
+
+            await _userService.UpdateUserAsync( user );
+
+            // Rollhantering
+            await _userService.UpdateUserRoleAsync( user, dto.Role );
+
             return NoContent();
         }
 
