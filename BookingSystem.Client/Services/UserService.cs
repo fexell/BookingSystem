@@ -1,5 +1,7 @@
-﻿using BookingSystem.Shared.DTOs;
+using BookingSystem.Shared.DTOs;
 using System.Net.Http.Json;
+
+namespace BookingSystem.Client.Services;
 
 public class UserService {
     private readonly HttpClient _http;

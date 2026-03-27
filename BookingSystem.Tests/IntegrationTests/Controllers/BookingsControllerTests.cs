@@ -31,7 +31,7 @@ namespace BookingSystem.Tests.IntegrationTests.Controllers
 
             // Ensure user exists in our in-memory db
             var dbUser = await db.Users.FindAsync(testUser.Id);
-            if (dbUser == null)
+            if (testUser.Id == 0 || dbUser == null)
             {
                 db.Users.Add(testUser);
                 await db.SaveChangesAsync();
@@ -58,7 +58,7 @@ namespace BookingSystem.Tests.IntegrationTests.Controllers
         {
             // Arrange
             var client = _factory.CreateClient();
-            var testUser = new User { Id = 1, UserName = "test_user", Email = "test@example.com" };
+            var testUser = new User { UserName = "test_user", Email = "test@example.com" };
             
             // Generate a valid JWT token
             var token = await GetJwtTokenAsync(testUser);
@@ -69,16 +69,14 @@ namespace BookingSystem.Tests.IntegrationTests.Controllers
             {
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                 
-                if (await db.Resources.FindAsync(1) == null)
-                {
-                    db.Resources.Add(new Resource { Id = 1, Name = "Test Room", Type = "Room" });
-                }
+                var resource = new Resource { Name = "Test Room", Type = "Room" };
+                db.Resources.Add(resource);
+                await db.SaveChangesAsync();
 
                 db.Bookings.Add(new Booking 
                 { 
-                    Id = 1, 
                     UserId = testUser.Id, 
-                    ResourceId = 1, 
+                    ResourceId = resource.Id, 
                     Status = "Active",
                     StartTime = DateTime.UtcNow,
                     EndTime = DateTime.UtcNow.AddHours(1)
@@ -101,7 +99,7 @@ namespace BookingSystem.Tests.IntegrationTests.Controllers
         {
             // Arrange
             var client = _factory.CreateClient();
-            var testUser = new User { Id = 2, UserName = "test_user2", Email = "test2@example.com" };
+            var testUser = new User { UserName = "test_user2", Email = "test2@example.com" };
             
             var token = await GetJwtTokenAsync(testUser);
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
@@ -111,21 +109,21 @@ namespace BookingSystem.Tests.IntegrationTests.Controllers
             var startTime = new DateTime(now.Year, now.Month, now.Day, now.Hour, 0, 0, DateTimeKind.Utc).AddDays(1);
             var endTime = startTime.AddHours(2);
 
+            int resourceId;
             using (var scope = _factory.Services.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                 
-                if (await db.Resources.FindAsync(2) == null)
-                {
-                    db.Resources.Add(new Resource { Id = 2, Name = "Overlapping Room", Type = "Room" });
-                }
+                var resource = new Resource { Name = "Overlapping Room", Type = "Room" };
+                db.Resources.Add(resource);
+                await db.SaveChangesAsync();
+                resourceId = resource.Id;
 
                 // Existing booking
                 db.Bookings.Add(new Booking 
                 { 
-                    Id = 2, 
                     UserId = testUser.Id, 
-                    ResourceId = 2, 
+                    ResourceId = resourceId, 
                     Status = "Active",
                     StartTime = startTime,
                     EndTime = endTime 
@@ -137,7 +135,7 @@ namespace BookingSystem.Tests.IntegrationTests.Controllers
             var requestDto = new CreateBookingRequest(
                 StartTime: startTime.AddHours(1),
                 EndTime:   startTime.AddHours(3),
-                ResourceId: 2
+                ResourceId: resourceId
             );
 
             // Act
