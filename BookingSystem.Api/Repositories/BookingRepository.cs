@@ -9,9 +9,6 @@ namespace BookingSystem.Api.Repositories {
             _context = context;
         }
 
-        // -----------------------------
-        // Base CRUD (from IRepository)
-        // -----------------------------
 
         public async Task<IEnumerable<Booking>> GetAllAsync() {
             return await _context.Bookings.ToListAsync();
@@ -39,11 +36,7 @@ namespace BookingSystem.Api.Repositories {
             }
         }
 
-        // -----------------------------
-        // Queries WITHOUT includes
-        // (used internally for validation)
-        // -----------------------------
-
+  
         public async Task<IEnumerable<Booking>> GetByUserIdAsync( int userId ) {
             return await _context.Bookings
                 .Where( b => b.UserId == userId )
@@ -56,10 +49,6 @@ namespace BookingSystem.Api.Repositories {
                 .ToListAsync();
         }
 
-        // -----------------------------
-        // Queries WITH includes
-        // (used by service → mapper → DTO)
-        // -----------------------------
 
         public async Task<IEnumerable<Booking>> GetAllWithIncludesAsync() {
             return await _context.Bookings

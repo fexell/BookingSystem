@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
+using System.Security.Claims; 
 using BookingSystem.Api.Controllers;
 using BookingSystem.Api.Models;
 using BookingSystem.Api.Services;
@@ -18,6 +18,26 @@ namespace BookingSystem.Api.Controllers
         public UsersController(IUserService userService)
         {
             _userService = userService;
+        }
+
+        [HttpGet("me")]
+        public async Task<IActionResult> GetMe()
+        {
+            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (!int.TryParse(userIdString, out int userId))
+            {
+                return Unauthorized("Kunde inte hitta ditt ID i inloggningen.");
+            }
+
+            var user = await _userService.GetUserByIdAsync(userId);
+
+            if (user == null)
+            {
+                return NotFound("Kunde inte hitta användaren i databasen.");
+            }
+
+            return Ok(UserMapperHelper.ToResponse(user));
         }
 
         [HttpGet]

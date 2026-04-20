@@ -1,81 +1,90 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
-
 using BookingSystem.Api.Models;
-using BookingSystem.Api.Services;
-using BookingSystem.Api.Filters;
-using BookingSystem.Api.Helpers;
+using BookingSystem.Api.Repositories;
 
-using BookingSystem.Shared.DTOs;
-
-namespace BookingSystem.Api.Controllers {
-    [Authorize]
+namespace BookingSystem.Api.Controllers
+{
+    [Route("api/[controller]")]
     [ApiController]
-    [Route( "api/[controller]" )]
-    public class BookingsController : ControllerBase {
-        private readonly IBookingService _bookingService;
+    [Authorize] // Kräver inloggning för allt här inne
+    public class BookingsController : ControllerBase
+    {
+        private readonly IBookingRepository _bookingRepository;
 
-        public BookingsController( IBookingService bookingService ) {
-            _bookingService = bookingService;
+        public BookingsController(IBookingRepository bookingRepository)
+        {
+            _bookingRepository = bookingRepository;
         }
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<BookingDto>>> GetAll() {
-            var bookings = await _bookingService.GetAllBookingsAsync();
-            return Ok( bookings );
+        // HÄMTA MINA BOKNINGAR: /api/bookings/user/me
+        [HttpGet("user/me")]
+        public async Task<IActionResult> GetMyBookings()
+        {
+            // Hämta ID från token
+            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdString, out int userId)) return Unauthorized("Kunde inte verifiera dig.");
+
+            var bookings = await _bookingRepository.GetByUserIdWithIncludesAsync(userId);
+
+            // Mappar till DTO (som din frontend vill ha)
+            var dtos = bookings.Select(b => new {
+                Id = b.Id,
+                ResourceId = b.ResourceId,
+                ResourceName = b.Resource?.Name ?? "Okänd",
+                StartTime = b.StartTime,
+                EndTime = b.EndTime,
+                Status = b.Status ?? "Bekräftad"
+            });
+
+            return Ok(dtos);
         }
 
-        [HttpGet( "{id}" )]
-        public async Task<ActionResult<BookingDto>> GetById( int id ) {
-            var booking = await _bookingService.GetBookingByIdAsync( id );
-            if ( booking == null )
-                return NotFound();
-
-            return Ok( booking );
-        }
-
-        [ServiceFilter( typeof( SameUserFilter ) )]
-        [HttpGet( "user/{userId}" )]
-        public async Task<ActionResult<IEnumerable<BookingDto>>> GetByUserId( int userId ) {
-            var bookings = await _bookingService.GetBookingsByUserIdAsync( userId );
-            return Ok( bookings );
-        }
-
+        // SKAPA BOKNING: /api/bookings
         [HttpPost]
-        public async Task<IActionResult> Create( CreateBookingRequest request ) {
-            var userId = int.Parse( User.FindFirstValue( ClaimTypes.NameIdentifier )! );
+        public async Task<IActionResult> CreateBooking([FromBody] Booking request)
+        {
+            // MAGIN SOM LÖSER FELET: Hämta ID från JWT-token!
+            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            var booking = new Booking {
+            if (!int.TryParse(userIdString, out int userId))
+            {
+                return Unauthorized("Kunde inte hitta ditt användar-ID i inloggningen.");
+            }
+
+            // Skapa bokningen och sätt UserId!!
+            var newBooking = new Booking
+            {
+                ResourceId = request.ResourceId,
                 StartTime = request.StartTime,
                 EndTime = request.EndTime,
-                ResourceId = request.ResourceId,
                 PartySize = request.PartySize,
                 Notes = request.Notes,
-                UserId = userId
+                Status = "Bekräftad",
+                UserId = userId // <--- DET ÄR DENNA RAD SOM GÖR ATT DET INTE KRASCHAR LÄNGRE!
             };
 
-            try {
-                var created = await _bookingService.CreateBookingAsync( booking );
-                return CreatedAtAction( nameof( GetById ), new { id = created.Id }, created );
-            } catch ( InvalidOperationException ex ) {
-                return BadRequest( new { message = ex.Message } );
-            }
+            await _bookingRepository.AddAsync(newBooking);
+            return Ok(newBooking);
         }
 
-        [HttpPut( "{id}" )]
-        public async Task<IActionResult> Update( int id, Booking booking ) {
-            if ( id != booking.Id )
-                return BadRequest( "ID does not match." );
+        // TA BORT BOKNING: /api/bookings/{id}
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteBooking(int id)
+        {
+            // Hämta ID från token
+            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdString, out int userId)) return Unauthorized();
 
-            await _bookingService.UpdateBookingAsync( booking );
-            return NoContent();
-        }
+            var booking = await _bookingRepository.GetByIdAsync(id);
+            if (booking == null) return NotFound();
 
-        [HttpDelete( "{id}" )]
-        public async Task<IActionResult> Delete( int id ) {
-            await _bookingService.DeleteBookingAsync( id );
-            return NoContent();
+            // Samma användare som skapat bokningen kan ta bort den
+            if (booking.UserId != userId) return Forbid();
+
+            await _bookingRepository.DeleteAsync(id);
+            return Ok();
         }
     }
 }

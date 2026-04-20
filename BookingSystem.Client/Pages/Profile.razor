@@ -1,26 +1,63 @@
 ﻿@page "/profile"
+@using Microsoft.AspNetCore.Authorization
+@using BookingSystem.Shared.DTOs
+@attribute [Authorize]
+@inject IHttpClientFactory HttpClientFactory
 
 <h3>Min Profil</h3>
 <hr />
 
-<div class="row">
-    <div class="col-md-6">
-        <div class="card shadow-sm">
-            <div class="card-body text-center">
-                
-                <i class="bi bi-person-circle text-primary" style="font-size: 5rem;"></i>
-                
-                <h4 class="card-title mt-3">Test Användare</h4>
-                <p class="text-muted">test@exempel.se</p>
-                
-                <div class="mt-4 text-start">
-                    <p><strong>Kontotyp:</strong> <span class="badge bg-info text-dark">Standardanvändare</span></p>
-                    <p><strong>Konto skapat:</strong> 2026-03-22</p>
+@if (user == null)
+{
+    <p>Laddar...</p>
+}
+else
+{
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <i class="bi bi-person-circle text-primary" style="font-size: 5rem;"></i>
+                    <h4 class="card-title mt-3">@user.FirstName @user.Surname</h4>
+                    <p class="text-muted">@user.Email</p>
+                    
+                    <div class="mt-4 text-start">
+                        <p><strong>Användarnamn:</strong> @user.Username</p>
+                    </div>
                 </div>
-            </div>
-            <div class="card-footer bg-transparent border-top-0">
-                <button class="btn btn-outline-secondary w-100">Redigera uppgifter</button>
+                <div class="card-footer bg-transparent border-top-0">
+                    <button class="btn btn-outline-secondary w-100">Redigera uppgifter</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
+}
+
+@code {
+    private UserResponse? user;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var client = HttpClientFactory.CreateClient("API");
+            
+            var response = await client.GetAsync("api/users/me");
+
+            if (response.IsSuccessStatusCode)
+            {
+                user = await response.Content.ReadFromJsonAsync<UserResponse>();
+            }
+            else
+            {
+                // Om den fastnar på "Laddar...", kolla F12-konsolen!
+                var error = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Kunde inte ladda profil. Status: {response.StatusCode}. Detaljer: {error}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Systemfel vid laddning av profil: {ex.Message}");
+        }
+    }
+}
